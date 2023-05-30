@@ -1,0 +1,196 @@
+---
+title: "Generate of ASE figures"
+author: "Glenn Chang"
+output: html_document
+---
+
+This is an R markdown is used to generate figures for ASE. The following chunk loads in the required library and imports the data.
+
+```{r import-library-and-data}
+suppressMessages(library(tidyverse))
+suppressMessages(library(ggpubr))
+suppressMessages(library(MetBrewer))
+
+options(dplyr.summarise.inform = FALSE)
+
+
+data <- readRDS("/projects/glchang_prj/finalPOGdata/allASEdata.RDS")
+```
+
+# CNV figures
+This figure shows the violin plot showing proportion of ASE and BAE gene in each CNV states.
+
+```{r cnv-figure, fig.width=2, fig.height=2}
+total <- data %>%
+  dplyr::filter(!is.na(cnv_state)) %>%
+  group_by(sample, cnv_state) %>%
+  summarize(total=n())
+
+ase <- data %>%
+  dplyr::filter(!is.na(cnv_state)) %>%
+  dplyr::filter(padj <= 0.05) %>%
+  group_by(sample, aseResults, cnv_state) %>%
+  summarize(n=n())
+
+prop <- left_join(ase, total, by = join_by(sample, cnv_state)) %>%
+  dplyr::mutate(prop = n/total) 
+
+ggviolin(
+  prop, x = "aseResults", y = "prop", fill = "aseResults", 
+  facet.by = "cnv_state") + 
+  stat_compare_means(aes(label = after_stat(p.signif)),
+                     comparisons = list( c("ASE", "BAE") ), 
+                     method = "wilcox.test", label.y = 1.25) + 
+  geom_boxplot(width=0.1, color="white", alpha=0.2) +
+  theme_bw(base_size=8) +
+  scale_colour_met_d('Renoir') +
+  theme(panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    legend.position="none", 
+    plot.title = element_text(size = 8, face = "bold")) + 
+  ggtitle("Propotion of genes \nin each CNV state") + 
+  ylab("Propotion of genes") 
+
+  
+```
+
+Figure to show correlation between expected major allele frequency and the mbased major allele frequency. The expected major allele frequency can be calculated using the formula below:
+
+$ expectedMAF = (\frac{max(cnv.A, cnv.B)}{cnv.A + cnv.B}* tumorContent) + (normalMAF * (1-tumorContent)) $
+
+
+```{r expected-maf-density-map, fig.width=2, fig.height=2}
+data_filt <- data %>%
+  dplyr::filter(padj < 0.05) %>%
+  dplyr::filter(!is.na(cnv_state)) %>%
+  dplyr::filter(!is.na(normalMAF)) %>%
+  dplyr::filter(expectedMAF > 0.5)
+
+correlation <- cor.test(data_filt$majorAlleleFrequency, data_filt$expectedMAF, 
+                        method = c("pearson"))
+
+data_filt %>%
+  ggplot(aes(x=majorAlleleFrequency, y=expectedMAF) ) +
+  stat_density_2d(aes(fill = ..density..), geom = "raster", contour = FALSE) +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_continuous(type = "viridis") + 
+  theme_set(theme_bw(base_size=8)) +
+  ggtitle("Correlation between expected \nand experimental MAF", 
+          subtitle = paste0("Pearson Correlation: ",
+                            format(correlation$estimate, digits=4))) +
+  theme(legend.position = "none", 
+        plot.title = element_text(size = 8, face = "bold")) +
+  theme(plot.subtitle=element_text(size=8)) + 
+  scale_colour_met_d('Renoir')
+  
+  
+```
+
+# Allelic Methylation figure
+Figure to show allelic methylation silencing. Methylation silencing is defined as cases with allelic methylation on the opposite allele as the major expressing allele. 
+
+```{r methyl-silencing-figure, fig.width=2, fig.height=2}
+geneTotal <- data %>%
+  dplyr::filter(cnv_state == "balance") %>%
+  group_by(aseResults, sample) %>%
+  summarize(totalN=n())
+
+data_filt <- data %>%
+  dplyr::filter(padj < 0.05) %>%
+  dplyr::filter(!is.na(methyl_state)) %>%
+  dplyr::filter(!is.na(allele1IsMajor)) %>%
+  dplyr::filter(cnv_state == "balance") %>%
+  dplyr::mutate(allele1IsMethyl = methyl_state > 0) %>% 
+  dplyr::mutate(methylSilencing = case_when(
+    allele1IsMethyl & !allele1IsMajor ~ T,
+    !allele1IsMethyl & allele1IsMajor ~ T,
+    allele1IsMethyl & allele1IsMajor ~ F,
+    !allele1IsMethyl & !allele1IsMajor ~ F
+  )) %>%
+  group_by(aseResults, sample, methylSilencing) %>%
+  summarize(n=n()) %>%
+  left_join(geneTotal, by = join_by(aseResults, sample)) %>%
+  dplyr::mutate(prop = n/totalN) %>%
+  dplyr::select(-n, -totalN)
+
+data_filt %>%
+  ggplot(aes(methylSilencing, prop)) +
+  facet_grid(.~aseResults) + 
+  geom_violin(aes(fill = methylSilencing)) +
+  geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+  theme_bw() +
+  theme_set(theme_bw(base_size=8)) +
+  theme(#axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    #panel.border = element_blank(),
+    panel.background = element_blank(),
+    legend.position="none") + 
+  ggtitle("Methylation silencing \nin ASE vs BAE genes") +
+  ylab("Proportion of ASE or BAE gene") + 
+  stat_compare_means(comparisons = list( c("TRUE", "FALSE") ), size = 1.5)
+
+```
+
+
+# Nonsense mutation (stop mutation)
+Figures comparing proportion of ASE vs BAE genes that contain nonsense mutation. Specifically, nonsense mutation on the minor allele. We expect nonsense mutation will result in an elongated or truncated transcript which will be degraded by nonsense mediated decay resulting in ASE.
+
+```{r nonsense-mutation-figure, fig.width=2, fig.height=2}
+geneTotal <- data %>%
+  group_by(sample, aseResults) %>%
+  summarize(totalN=n())
+
+data %>%
+  dplyr::filter(!is.na(stop_variant_allele)) %>%
+  group_by(sample, aseResults) %>%
+  summarize(n=n()) %>%
+  left_join(geneTotal, by = join_by(sample, aseResults)) %>%
+  dplyr::mutate(prop = n/totalN) %>%
+  ggplot(aes(aseResults, prop)) + 
+  geom_violin(aes(fill = aseResults)) + 
+  ylab("Proportion of genes \nwith nonsense mutation") + 
+  stat_compare_means(comparisons = list( c("ASE", "BAE")), size = 1.5) + 
+  geom_boxplot(width = 0.25, alpha = 0.5) +
+  ggtitle("Proportion of gene with\nnonsense mutation \nin ASE vs BAE") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        legend.position="none", 
+        plot.title = element_text(size = 8, face = "bold")) +
+  scale_colour_met_d('Renoir') 
+
+```
+
+```{r nonsense-minor-allele-figure, fig.width=2, fig.height=2}
+data %>%
+  dplyr::filter(cnv_state == "balance") %>%
+  dplyr::filter(!is.na(stop_variant_allele)) %>%
+  dplyr::mutate(stopVarIsMinor = case_when(
+    allele1IsMajor & stop_variant_allele == 2 ~ T, 
+    !allele1IsMajor & stop_variant_allele == 1 ~ T,
+    allele1IsMajor & stop_variant_allele == 1 ~ F, 
+    !allele1IsMajor & stop_variant_allele == 2 ~ F
+  )) %>%
+  group_by(sample, aseResults, stopVarIsMinor) %>%
+  summarize(n=n()) %>%
+  dplyr::filter(!is.na(stopVarIsMinor)) %>%
+  left_join(geneTotal, by = join_by(sample, aseResults)) %>%
+  dplyr::mutate(prop = n/totalN) %>%
+  ggplot(aes(stopVarIsMinor, prop)) + 
+  geom_violin(aes(fill = stopVarIsMinor)) + 
+  facet_grid(~aseResults) + 
+  stat_compare_means(comparisons = list( c("TRUE", "FALSE")), size = 1.5) + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        legend.position="none",
+        plot.title = element_text(size = 8, face = "bold")) +
+  ylab("Proportion of genes") + 
+  xlab("Nonsense mutation \non minor allele") + 
+  ggtitle("Proportion of gene with \nnonsense mutation on \nminor alelle") + 
+  geom_boxplot(width = 0.2, alpha = 0.5) +
+  scale_colour_met_d('Renoir') 
+```
