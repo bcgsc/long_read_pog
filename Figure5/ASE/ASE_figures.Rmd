@@ -13,7 +13,7 @@ suppressMessages(library(MetBrewer))
 
 options(dplyr.summarise.inform = FALSE)
 
-
+# Will change to importing from public repo
 data <- readRDS("/projects/glchang_prj/finalPOGdata/allASEdata.RDS")
 ```
 
@@ -135,7 +135,7 @@ data_filt %>%
 ```
 
 
-# Nonsense mutation (stop mutation)
+# Nonsense mutation (stop mutation) - Supplemental Figure
 Figures comparing proportion of ASE vs BAE genes that contain nonsense mutation. Specifically, nonsense mutation on the minor allele. We expect nonsense mutation will result in an elongated or truncated transcript which will be degraded by nonsense mediated decay resulting in ASE.
 
 ```{r nonsense-mutation-figure, fig.width=2, fig.height=2}
