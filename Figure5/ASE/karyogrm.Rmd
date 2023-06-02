@@ -1,10 +1,11 @@
 ---
-title: "ASE_karyogram.Rmd"
+title: "Generate of karyogram"
+author: "Glenn Chang"
 output: html_document
 ---
 ## ASE karyogram 
 
-This R Markdown is used to generate the karyogram figure for POG184. The figure uses ASE results from IMPALA, allelic methylation data from NanoMethPhase and copy number variant data from Ploidetect. The following Rmd is copied/modified from the `karyogramFigure.R` script in the IMPALA pipeline.
+This R Markdown is used to generate the karyogram figure for sample 25134. The figure uses ASE results from IMPALA, allelic methylation data from NanoMethPhase and copy number variant data from Ploidetect. The following Rmd is copied/modified from the `karyogramFigure.R` script in the IMPALA pipeline.
 
 
 ```{r setup}
@@ -17,7 +18,7 @@ suppressMessages(library(cowplot))
 
 This import the required reference files an intermediate files generated from IMPALA
 ```{r import-data}
-SAMPLE <- # NEED TO ADD 
+SAMPLE <- 25134
 
 # Reference file
 chromSize <- read.delim("ref/hg38_genome_length.tsv", header = F)
@@ -25,9 +26,9 @@ centPos <-  read.delim("ref/hg38_centromere_positions.bed", header = F)
 genes <- read.delim("ref/hg38_gene_annotation.bed", header = F)
 
 # Import data
-cna <- read.delim("/projects/lculibrk_prj/pog_cron/hg38/Ploidetect-pipeline/ploidetect_out_1_3_0/POG184/P00537_P00499/cna_condensed.txt", header = T)
-dmr <- read.delim("/projects/nanopore_pog/analysis/Methylation/POG184-FF-1_F112341_F94404/Allelic_DMA_DSS-2-46/POG184-FF-1_F112341_F94404_callDMR_Filtered_diff.methyl0.15.txt.gz", header = T)
-ase <- readRDS("/projects/glchang_prj/finalPOGdata/allASEdata.RDS") %>%
+cna <- read.delim("ref/25134_cna_condensed.txt", header = T)
+dmr <- read.delim("ref/25134_callDMR.txt.gz", header = T)
+ase <- readRDS("/projects/glchang_prj/finalPOGdata/allASEdata_anonymize.RDS") %>%
   dplyr::filter(sample == SAMPLE)
 
 
@@ -145,7 +146,7 @@ asePlot$pos <- as.numeric(asePlot$pos)
 ```
 
 # Plot Figure
-```{r}
+```{r plot-figure}
 adL <- data.frame(xmin = c(9.7, 9.7, 9.7, 10.3,9.7,10.3,7.1,7.1), xmax = c(10.35, 10.35,9.75,10.35,9.75,10.35,7.26,7.26), ymin = c(240,210,238,238,208,208,235,205), ymax = c(243,213,243,243,213,213,245,215),
                     fill = c("ase","dmr","ase","ase","dmr","dmr", "gain", "loh"))
   

@@ -14,7 +14,7 @@ suppressMessages(library(MetBrewer))
 options(dplyr.summarise.inform = FALSE)
 
 # Will change to importing from public repo
-data <- readRDS("/projects/glchang_prj/finalPOGdata/allASEdata.RDS")
+data <- readRDS("/projects/glchang_prj/finalPOGdata/allASEdata_anonymize.RDS")
 ```
 
 # CNV figures
