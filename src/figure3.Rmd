@@ -1,0 +1,162 @@
+---
+title: "Figure 3C-E generation (ASE)"
+output: github_document
+---
+
+This R markdown is to generate Figure 3C-E relating to allele specific expression (ASE) analysis of Nanopore Long POG cohort. 
+
+
+```{r}
+library(tidyverse)
+library(ggbeeswarm)
+
+# Import IMPALA summary result
+impala_result <- read_delim("/projects/nanopore_pog/manuscripts/resource_paper/metadata/internal/impalaResultAnonymous.tsv.gz", show_col_types = FALSE)
+
+# Import expression matrix
+expressionMatrix <- read_delim("/projects/nanopore_pog/manuscripts/resource_paper/metadata/internal/expressionMatrix.tsv.gz")
+```
+
+This chunk is used to import necessary libraries and import ASE summary results. The summary results are generated using the IMPALA pipeline. 
+
+# Figure 3C
+This figure shows the classification of genes in the IMPALA pipeline. Genes are sepperated based on low expression (<1 TPM), fully phased (contained phased SNP), ASE (major expressing allele frequecny ≥ 0.65) and biallelic expression (BAE) gene (major expressing allele frequecny < 0.65).
+
+This chunk obtains the number of expressed, phased, ASE and BAE gene in each sample. This is the preprocessing for figure 3C
+```{r}
+figure3c <- tibble()
+
+for (sample in unique(impala_result$sample)) {
+  data <- impala_result[impala_result$sample == sample, ]
+  
+  if (!sample %in% colnames(expressionMatrix)) {
+    next
+  }
+  exp <- expressionMatrix %>%
+    dplyr::select(gene, sample) %>%
+    `colnames<-`(c("gene", "sample"))
+
+  highExp <- exp %>%
+    dplyr::filter(sample >= 1) %>%
+    pull(gene)
+  
+  phased <- length(data$gene)
+  
+  ASE <- nrow(data[data$aseResults == "ASE", ])
+  BAE <- nrow(data[data$aseResults == "BAE", ])
+  
+  figure3c <- bind_rows(final, 
+                        tibble(sample = sample, 
+                               expression = length(highExp), 
+                               phasing = phased, 
+                               ASE = ASE, 
+                               BAE = BAE))
+}
+
+figure3c <- figure3c %>%
+  pivot_longer(-sample) 
+  
+figure3c$name <- factor(final$name , levels=c("expression", "phasing", "BAE", "ASE"))
+
+head(figure3c)
+```
+
+Code to generate figure 3C
+```{r}
+figure3c %>% 
+  dplyr::mutate(value = value / 1000) %>%
+  dplyr::mutate(type = case_when(
+    name %in% c("ASE", "BAE") ~ name,
+    T ~ NA
+  )) %>%
+  ggplot(aes(name, value)) + 
+  theme(legend.position="none") + 
+  geom_boxplot(aes(name, value, fill = type)) + 
+  geom_beeswarm(alpha = 0.4) + 
+  ylab("Number of gene (thousand)") + 
+  xlab("Classification by IMPALA") + 
+  ggtitle("Figure 3C: Classification of genes in LongPOG cohort by IMPALA") 
+```
+
+
+# Figure 3D
+This figure shows the proportion of ASE and BAE genes within each copy number (CNV) state. CNV state is sepperated by allelic CNV balance, allelic CNV imbalance and loss of heterozygosity 
+
+This chunk is preprocessing of figure 3D to obtain the proportion of ASE and BAE genes in each CNV state.
+```{r}
+cnvTotal <- impala_result %>%
+  dplyr::filter(!is.na(cnv_state)) %>%
+  group_by(sample, cnv_state) %>%
+  summarize(total=n())
+
+cnvAse <- impala_result %>%
+  dplyr::filter(!is.na(cnv_state)) %>%
+  dplyr::filter(padj <= 0.05) %>%
+  group_by(sample, aseResults, cnv_state) %>%
+  summarize(n=n())
+
+figure3d <- left_join(cnvAse, cnvTotal, by = join_by(sample, cnv_state)) %>%
+  dplyr::mutate(prop = n/total) 
+
+head(figure3d)
+```
+Code to generate figure 3D
+```{r}
+ggviolin(
+  figure3d, x = "aseResults", y = "prop", fill = "aseResults", 
+  facet.by = "cnv_state") + 
+  stat_compare_means(aes(label = after_stat(p.signif)),
+                     comparisons = list( c("ASE", "BAE") ), 
+                     method = "wilcox.test", label.y = 1.25) + 
+  geom_boxplot(width=0.1, color="white", alpha=0.2) +
+  scale_colour_met_d('Renoir') +
+  theme(panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    legend.position="none") + 
+  ggtitle("Propotion of ASE and BAE genes in each CNV state") + 
+  ylab("Propotion of genes") 
+```
+
+# Figure 3E
+This figure is used to show the proportion of ASE and BAE gene with allelic methylation in different phasing configuration (in cis or in trans)
+
+Preprocessing for figure 3E
+```{r}
+figure3e <- impala_result %>%
+  dplyr::filter(padj < 0.05) %>%
+  dplyr::filter(!is.na(allelic_promoter_methyl)) %>%
+  dplyr::filter(!is.na(allele1IsMajor)) %>%
+  dplyr::filter(cnv_state == "balance") %>%
+  dplyr::mutate(allele1IsMethyl = allelic_promoter_methyl == 1) %>% 
+  dplyr::mutate(methylSilencing = case_when(
+    allele1IsMethyl & !allele1IsMajor ~ T,
+    !allele1IsMethyl & allele1IsMajor ~ T,
+    allele1IsMethyl & allele1IsMajor ~ F,
+    !allele1IsMethyl & !allele1IsMajor ~ F
+  )) %>%
+  dplyr::mutate(methyASEphasing = ifelse(methylSilencing, "in trans", "in cis")) %>%
+  group_by(aseResults, sample, methyASEphasing) %>%
+  summarize(n=n()) %>%
+  dplyr::mutate(prop = n/sum(n)) 
+
+head(figure3e)
+```
+
+Code to generate figure 3E
+```{r}
+figure3e %>%
+  ggplot(aes(methyASEphasing, prop)) +
+  facet_grid(.~aseResults) + 
+  geom_violin(aes(fill = methyASEphasing)) +
+  geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    legend.position="none") + 
+  xlab("Phasing of ASM and major expressing allele") +
+  ylab("Genes with allele-specific promoter methylation") + 
+  stat_compare_means(comparisons = list( c("in cis", "in trans") )) 
+```
