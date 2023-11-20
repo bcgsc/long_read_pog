@@ -1,0 +1,30 @@
+# Github action that renders R markdown when PR is opened
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+name: render-rmarkdown
+
+jobs:
+  render-rmarkdown:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Run Docker container to compile assets
+        uses: addnab/docker-run-action@v3
+        with:
+          image: quay.io/bcgsc_pog/nanopore_pog_rmd:latest
+          options: -v ${{ github.workspace }}:/home
+          run: |
+            cd /home
+            RMD_FILES=$( find . -name "*Rmd" |  tr '\n' ' ')
+            echo $RMD_FILES
+            Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' $RMD_FILES
+      - uses: stefanzweifel/git-auto-commit-action@v4
