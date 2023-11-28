@@ -1,4 +1,5 @@
 # Github action that renders R markdown when PR is opened
+# All R markdown is run in container/rmd.Dockerfile 
 
 on:
   pull_request:
@@ -17,17 +18,26 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          file: container/rmd.Dockerfile
+          context: .
+          push: false  # Set to true if you want to push the image to a registry
+          tags: notebook-runner
+
       - name: Run Docker container to compile assets
         uses: addnab/docker-run-action@v3
         with:
-          image: quay.io/bcgsc_pog/nanopore_pog_rmd:latest
-          options: -v ${{ github.workspace }}:/home
+          image: notebook-runner
+          options: -v ${{ github.workspace }}:/workspace --rm -u root
           run: |
-            cd /home
-            RMD_FILES=$( find . -name "*Rmd" |  tr '\n' ' ')
-            echo $RMD_FILES
-            Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' $RMD_FILES
-      - name: Test file
-        run: |
-          ls src/*
+            RMD_FILES=$( find /workspace -name "*Rmd"  -o -name "*rmd" |  tr '\n' ' ')
+            if [ -n "$RMD_FILES" ]; then
+                echo $RMD_FILES
+                Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' $RMD_FILES
+            else
+                echo "No R markdown found. Skipping execution."
+            fi
       - uses: stefanzweifel/git-auto-commit-action@v4
