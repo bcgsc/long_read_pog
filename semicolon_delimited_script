@@ -1,0 +1,7 @@
+notebooks=$(find /workspace -name "*.ipynb")
+if [ -n "$notebooks" ]; then
+    find /workspace -name "*.ipynb" -exec jupyter nbconvert --to notebook --execute {} \;
+else
+    echo "No Jupyter notebooks found. Skipping execution."
+fi 
+
