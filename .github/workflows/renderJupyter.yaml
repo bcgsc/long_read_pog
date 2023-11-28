@@ -1,0 +1,35 @@
+name: Run Jupyter Notebooks
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+
+jobs:
+  run_notebooks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        file: jupyter.Dockerfile
+        context: ./container
+        push: false  # Set to true if you want to push the image to a registry
+        tags: notebook-runner
+
+
+    - name: Run Jupyter Notebooks
+      run: |
+        notebooks=$(find . -name "*.ipynb")
+        if [ -n "$notebooks" ]; then
+          docker run --rm -u root -v $PWD:/workspace notebook-runner bash -c "find /workspace -name "*.ipynb" -exec jupyter nbconvert --to notebook --execute {} \;"
+        else
+          echo "No Jupyter notebooks found. Skipping execution."
+        fi
+    
+    - uses: stefanzweifel/git-auto-commit-action@v4 
