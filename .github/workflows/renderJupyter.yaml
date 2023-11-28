@@ -1,4 +1,7 @@
-name: Run Jupyter Notebooks
+# Github action that runs all jupyter notebook after pull request
+# Jupyter notebooks will be run in the container/jupyter.Dockerfile 
+
+name: render-jupyter-notebook
 
 on:
   pull_request:
@@ -17,8 +20,8 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
       with:
-        file: jupyter.Dockerfile
-        context: ./container
+        file: container/jupyter.Dockerfile
+        context: .
         push: false  # Set to true if you want to push the image to a registry
         tags: notebook-runner
 
