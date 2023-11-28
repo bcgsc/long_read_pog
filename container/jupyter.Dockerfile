@@ -18,4 +18,3 @@ EXPOSE 8888
 
 # Command to run Jupyter notebook on container startup
 CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--no-browser", "--allow-root"]
-~                                                                                      
