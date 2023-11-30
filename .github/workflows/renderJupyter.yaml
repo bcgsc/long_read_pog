@@ -1,0 +1,42 @@
+# Github action that runs all jupyter notebook after pull request
+# Jupyter notebooks will be run in the container/jupyter.Dockerfile 
+
+name: render-jupyter-notebook
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+
+jobs:
+  run_notebooks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        file: container/jupyter.Dockerfile
+        context: .
+        push: false  # Set to true if you want to push the image to a registry
+        tags: notebook-runner
+
+
+    - name: Run Docker container to compile JupyterNotebook
+      uses: addnab/docker-run-action@v3
+      with:
+        image: notebook-runner
+        options: -v ${{ github.workspace }}:/workspace --rm -u root
+        run: |
+          notebooks=$(find /workspace -name "*.ipynb")
+          if [ -n "$notebooks" ]; then
+              find /workspace -name "*.ipynb" -exec jupyter nbconvert --to notebook --execute {} \;
+          else
+              echo "No Jupyter notebooks found. Skipping execution."
+          fi 
+
+    - uses: stefanzweifel/git-auto-commit-action@v4 

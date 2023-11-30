@@ -12,6 +12,3 @@ RUN R -e 'remotes::install_version("egg", "0.4.5")'
 
 # R Bioconductor packages:
 #RUN R -e 'BiocManager::install("BSgenome")'
-
-
-
