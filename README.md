@@ -6,4 +6,4 @@ All code to generate all figures in the main manuscript can be found under the `
 
 
 ## Analysis code
-Code for the more computationally-intensive analyses that created the summary data is provided here. This will generally require some configuration (and access to HPC resources) to get working. This will also require downloading the raw sequence data from EGA. The primary purpose of providing this code is to serve as a record of tool versions and parameters used.
+Code for the more computationally-intensive analyses that created the summary data is provided under the `Analysis/` subdirectories. This will generally require some configuration (and access to HPC resources) to get working. This will also require downloading the raw sequence data from EGA. The primary purpose of providing this code is to serve as a record of tool versions and parameters used.
