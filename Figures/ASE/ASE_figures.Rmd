@@ -1,7 +1,7 @@
 ---
 title: "Generate of ASE figures"
 author: "Glenn Chang"
-output: html_document
+output: github_document
 ---
 
 This is an R markdown is used to generate figures for ASE. The following chunk loads in the required library and imports the data. The ASE data is obtain through the IMPALA pipeline which can be found here: https://github.com/bcgsc/IMPALA
