@@ -7,8 +7,7 @@ RUN R -e 'remotes::install_version("tidyverse", "2.0.0")'
 RUN R -e 'remotes::install_version("MetBrewer", "0.2.0")'
 RUN R -e 'remotes::install_version("ggbeeswarm", "0.7.2")'
 RUN R -e 'remotes::install_version("egg", "0.4.5")'
-
-
+RUN R -e 'remotes::install_version("ggpubr", "0.6.0")'
 
 # R Bioconductor packages:
 #RUN R -e 'BiocManager::install("BSgenome")'
