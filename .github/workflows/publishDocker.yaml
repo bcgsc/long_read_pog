@@ -45,7 +45,7 @@ jobs:
     - name: Build and push Rmd Docker image
       uses: docker/build-push-action@v2
       with:
-        file: container/Rmd.Dockerfile
+        file: container/rmd.Dockerfile
         context: .
         push: true
         tags: ${{ steps.meta_rmd.outputs.tags }}
