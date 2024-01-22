@@ -1,0 +1,52 @@
+name: publish-docker
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  publish-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract metadata (tags, labels) for Jupyter Docker
+      id: meta_jupyter
+      uses: docker/metadata-action@v5.3.0
+      with:
+                images: bcgsc/long-pog-jupyter
+
+    - name: Build and push Jupyter Docker image
+      uses: docker/build-push-action@v2
+      with:
+        file: container/jupyter.Dockerfile
+        context: .
+        push: true
+        tags: ${{ steps.meta_jupyter.outputs.tags }}
+        labels: ${{ steps.meta_jupyter.outputs.labels }}
+
+    - name: Extract metadata (tags, labels) for Rmd Docker
+      id: meta_rmd
+      uses: docker/metadata-action@v5.3.0
+      with:
+                images: bcgsc/long-pog-rmd
+
+    - name: Build and push Rmd Docker image
+      uses: docker/build-push-action@v2
+      with:
+        file: container/rmd.Dockerfile
+        context: .
+        push: true
+        tags: ${{ steps.meta_rmd.outputs.tags }}
+        labels: ${{ steps.meta_rmd.outputs.labels }}
