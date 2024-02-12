@@ -1,5 +1,5 @@
 # The Long-read POG Cohort
-[![render-rmarkdown](https://github.com/bcgsc/nanopore_pog/actions/workflows/renderRMarkdown.yaml/badge.svg)](https://github.com/bcgsc/nanopore_pog/actions/workflows/renderRMarkdown.yaml)
+[![render-rmarkdown](https://github.com/bcgsc/nanopore_pog/actions/workflows/renderRMarkdown.yaml/badge.svg?branch=main)](https://github.com/bcgsc/nanopore_pog/actions/workflows/renderRMarkdown.yaml)
 
 The Long-read POG Cohort is a set of whole-genome sequencing of diverse advanced cancer samples from participants in the [Personalized Oncogenomics Programme at Canada's Michael Smith Genome Sciences Centre](https://www.bcgsc.ca/personalized-oncogenomics-program), sequenced using long-read sequencing modalities. The first release includes 189 tumours from 181 individuals sequenced on an Oxford Nanopore Technologies PromethION, using the R9.4.1 chemistry. 41 of these include matching normal samples from the same individuals. 
 
