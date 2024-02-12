@@ -1,0 +1,98 @@
+---
+title: "SV_longPOG_duplication"
+output: html_document
+---
+
+### Duplication Subanalysis
+
+```{r duplication box plot}
+duplication <- in_file_processed_tumour_comparison_dup4 %>% filter(Platform2 == 'Nanopore_only') %>% group_by(library,event_type) %>% summarize(count = n()) %>% mutate(ratio = count / sum(count)* 100) %>% mutate(MSI_Status = ifelse(library=='25980_N_F111714', '25980_N_F111714', ifelse(library=='25902_N_F111726', '25902_N_F111726', 'N/A'))) %>% filter(event_type =='duplication') 
+  
+in_file_processed_tumour_comparison_dup4 %>% filter(Platform2 == 'Nanopore_only') %>% group_by(library,event_type) %>% summarize(count = n()) %>% mutate(ratio = count / sum(count)* 100) %>% mutate(MSI_Status = ifelse(library=='25980_N_F111714', '25980_N_F111714', ifelse(library=='25902_N_F111726', '25902_N_F111726', 'N/A'))) %>% filter(event_type =='duplication') %>% 
+ggplot(aes(x=event_type, y=ratio, color=MSI_Status)) +
+    geom_boxplot(alpha=0.4,position = "dodge",outlier.shape=NA)+
+    geom_beeswarm(alpha=0.7, position= "dodge", dodge.width=0.5) +
+    labs(x = "Event Type", y = "Proportion of total SVs that are inversions, (%)") + theme_bw() +
+  guides(color=guide_legend(title="High Inversion Sample ID"))
+```
+
+
+```{r duplication processing}
+
+list_of_cols = c('SAVANA', 'nanomonSV')
+in_file_processed_tumour_comparison_dup <- in_file_processed_tumour_comparison %>% filter(event_type == 'duplication' & Nanopore_Only ==TRUE) %>% filter(break1_chromosome != 'X') %>% filter(break1_chromosome != 'Y') 
+
+ComplexUpset::upset(
+  in_file_processed_tumour_comparison_dup,
+  list_of_cols,
+  annotations = list(
+    'SV Length'=(
+      ggplot(mapping=aes(y=event_size, colour=break1_chromosome))
+      + geom_quasirandom()
+    ))
+  )
+sample_sheet <- read.delim('SAMPLE_SHEET.tab')
+
+in_file_processed_tumour_comparison_dup_per_sample <- in_file_processed_tumour_comparison_dup %>%
+  group_by(library,event_type) %>%
+  summarize(count = n()) 
+
+
+in_file_processed_tumour_comparison_dup_per_sample <- in_file_processed_tumour_comparison_dup %>%
+  group_by(library) %>%
+  summarize(medina = median(event_size))
+
+in_file_processed_tumour_comparison_dup2 <- in_file_processed_tumour_comparison %>% filter(Nanopore_Only ==TRUE) %>% filter(break1_chromosome != 'X') %>% filter(break1_chromosome != 'Y') 
+ggplot(in_file_processed_tumour_comparison_dup2, aes(x =library, fill=event_type)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+```{r duplication_outlier_sample_starting_analysis}
+high_dup_count_gg <- in_file_processed_tumour_comparison_dup3 %>% group_by(library,event_type) %>% summarize(count = n()) %>% mutate(ratio = count / sum(count)* 100) %>% mutate(high_dup_status = ifelse(library=='POG303'|library=='POG279', "High Duplication Profile", 'Standard Duplication Profile')) %>% 
+ggplot(aes(x=event_type, y=count, color=high_dup_status)) +
+    geom_quasirandom(alpha=0.8) +
+    labs(x = "Event Type", y = "% of calls") + theme_bw() +
+  guides(color=guide_legend(title="High Duplication Status"))
+
+prow <- plot_grid(
+  high_dup_count_gg + xlab(''),
+  high_dup_ratio_gg,
+  nrow = 2
+)
+plot_grid(prow, rel_widths = c(3, .4))
+
+
+```
+
+```{r duplication Illumina}
+
+list_of_cols = c('SAVANA', 'nanomonSV')
+in_file_processed_tumour_comparison_dup <- in_file_processed_tumour_comparison %>% filter(event_type == 'duplication' & (Illumina_High_Quality_Yes ==TRUE & Nanopore == FALSE)) %>% filter(break1_chromosome != 'X') %>% filter(break1_chromosome != 'Y') %>% select(tracking_id, break1_chromosome, gene1_aliases, break1_position_start, break2_position_end, event_size, SAVANA, nanomonSV, library)
+
+ComplexUpset::upset(
+  in_file_processed_tumour_comparison_dup,
+  list_of_cols,
+  annotations = list(
+    'SV Length'=(
+      ggplot(mapping=aes(y=event_size, colour=break1_chromosome))
+      + geom_quasirandom()
+    ))
+  )
+
+
+ggplot(in_file_processed_tumour_comparison_dup, aes(x =library)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+in_file_processed_tumour_comparison_dup_per_sample <- in_file_processed_tumour_comparison_dup %>%
+  group_by(library) %>%
+  summarize(count = n())
+
+
+in_file_processed_tumour_comparison_dup_per_sample <- in_file_processed_tumour_comparison_dup %>%
+  group_by(library) %>%
+  summarize(medina = median(event_size)) 
+```

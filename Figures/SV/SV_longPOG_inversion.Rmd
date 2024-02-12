@@ -1,0 +1,168 @@
+---
+title: "SV_longPOG_inversion"
+output: html_document
+---
+
+### Inversion Subanalysis
+```{r inversion call profile}
+nanopore_only_inversions_no_dgv <- in_file_processed_tumour_comparison_dup4 %>% filter(Illumina_High_Quality == 'Nanopore_only' & event_type=='inversion'& dgv == '') 
+
+nanopore_only_inversions_no_dgv  %>% group_by(library) %>% summarize(count = n()) %>% mutate(ratio = count / sum(count)* 100) %>% mutate(Chromothripsis = ifelse(library=='23189_N_F111743-F116448'|library=='23808_N_F111742', "True", 'False')) %>%
+  ggplot(aes(Chromothripsis,count))   +
+  geom_violin() +
+  geom_beeswarm(position = position_jitter(seed = 1, width = 0.2)) +
+  ylab('Count of inversion events, (n)')+
+  xlab('Chromothripises detected in sample')+
+  geom_signif(comparisons = list(c("True", "False")),
+              map_signif_level=TRUE)
+```
+
+```{r inversion bot plot}
+in_file_processed_tumour_comparison_dup4 %>% filter(Platform2 == 'Nanopore_only') %>% group_by(library,event_type) %>% summarize(count = n()) %>% mutate(ratio = count / sum(count)* 100) %>% mutate(MSI_Status = ifelse(library=='23189_N_F111743-F116448', '23189_N_F111743-F116448', ifelse(library=='23808_N_F111742', '23808_N_F111742', 'N/A'))) %>% filter(event_type =='inversion') %>% 
+ggplot(aes(x=event_type, y=ratio, color=MSI_Status)) +
+    geom_boxplot(alpha=0.4,position = "dodge",outlier.shape=NA)+
+    geom_beeswarm(alpha=0.7, position= "dodge", dodge.width=0.5) +
+    labs(x = "Event Type", y = "Proportion of total SVs that are inversions, (%)") + theme_bw() +
+  guides(color=guide_legend(title="High Inversion Sample ID"))
+
+in_file_processed_tumour_comparison_dup4 %>% filter(Platform2=='Nanopore_only'|Platform2=='Illumina_only_HQ'|Platform2=='Illumina_only_LQ') %>% filter(event_type =='inversion') %>% group_by(library,Platform2) %>% summarize(count = n()) %>% mutate(ratio = count / sum(count)* 100) %>% mutate(MSI_Status = ifelse(library=='23189_N_F111743-F116448', '23189_N_F111743-F116448', ifelse(library=='23808_N_F111742', '23808_N_F111742', 'Other Sample'))) %>%
+ggplot(aes(x=Platform2, y=count, color=MSI_Status)) +
+    geom_boxplot(alpha=0.4,position = "dodge",outlier.shape=NA)+
+    geom_beeswarm(alpha=0.7, position= "dodge", dodge.width=0.5) +
+    labs(x = "Event Type", y = "Proportion of total SVs that are inversions, (%)") + theme_bw() +
+  guides(color=guide_legend(title="High Inversion Sample ID"))
+
+in_file_processed_tumour_comparison_dup4 %>% filter(event_type =='inversion') %>% filter(Nanopore==TRUE) %>% group_by(library, Platform2) %>% summarize(count = n()) %>% mutate(ratio = count / sum(count)* 100) %>% mutate(MSI_Status = ifelse(library=='23189_N_F111743-F116448', '23189_N_F111743-F116448', ifelse(library=='23808_N_F111742', '23808_N_F111742', 'Other Sample'))) %>%
+ggplot(aes(x=Platform2, y=ratio, color=MSI_Status)) +
+    geom_boxplot(alpha=0.4,position = "dodge",outlier.shape=NA)+
+    geom_beeswarm(alpha=0.7, position= "dodge", dodge.width=0.5) +
+    labs(x = "Event Type", y = "Proportion of total SVs that are inversions, (%)") + theme_bw() +
+  guides(color=guide_legend(title="High Inversion Sample ID"))
+```
+
+#### Inversion analyses - POG147 
+```{r inversion POG147}
+list_of_cols = c('SAVANA', 'nanomonSV', 'Illumina_High_Quality_Yes')
+
+nanopore_only_inversions_no_dgv2 <- in_file_processed_tumour_comparison_dup4 %>% filter((Illumina_High_Quality == 'Nanopore_only'|Illumina_High_Quality == 'True') & event_type=='inversion'& dgv == '') %>% mutate(Focal_amplification = ifelse(break1_chromosome==5 |break1_chromosome==8, "True", 'False')) %>% mutate(Focal_amplification_chr12 = ifelse(break1_chromosome==12, "True", 'False'))  
+
+ComplexUpset::upset(
+  nanopore_only_inversions_no_dgv2 %>% filter(library =='23808_N_F111742'),
+  list_of_cols,
+  annotations = list(
+    'SV Length, (basepair)'=(
+      ggplot(mapping=aes(y=event_size, colour=Focal_amplification))
+      + geom_beeswarm(na.rm=TRUE)+ scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) 
+      + labs(color = "Event in chr5 or chr8")
+    )),
+  labeller=ggplot2::as_labeller(c(
+    'Illumina_High_Quality_Yes'= 'Illumina High Quality',
+    'nanomonSV' = 'nanomonSV',
+    'SAVANA' = 'SAVANA'
+  )),
+  width_ratio=0.1,
+      set_sizes=(
+        upset_set_size()
+        + theme(axis.text.x=element_text(angle=90))
+    )
+)
+```
+```{r inversion POG111}
+
+list_of_cols = c('SAVANA', 'nanomonSV', 'Illumina_High_Quality_Yes')
+
+
+ComplexUpset::upset(
+  nanopore_only_inversions_no_dgv2 %>% filter(library =='23189_N_F111743-F116448'),
+  list_of_cols,
+  annotations = list(
+    'SV Length, (basepair)'=(
+      ggplot(mapping=aes(y=event_size, colour=Focal_amplification_chr12))
+      + geom_beeswarm(na.rm=TRUE)+ scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) 
+      + labs(color = "Event on chromosome 12")
+    )),
+  labeller=ggplot2::as_labeller(c(
+    'Illumina_High_Quality_Yes'= 'Illumina High Quality',
+    'nanomonSV' = 'nanomonSV',
+    'SAVANA' = 'SAVANA'
+  )),
+  width_ratio=0.1,
+      set_sizes=(
+        upset_set_size()
+        + theme(axis.text.x=element_text(angle=90))
+    )
+)
+
+nanopore_only_inversions_no_dgv_pog111_chr12 <- nanopore_only_inversions_no_dgv2 %>% filter(library =='23189_N_F111743-F116448'&break1_chromosome==12) %>% select(tracking_id, break1_position_start, break2_position_end, event_size, SAVANA, nanomonSV, Platform2)
+
+```
+
+```{r density plot without outliers}
+without_outliers <-in_file_processed2 %>% filter(library!='POG147') %>% filter(library!='POG111') 
+without_outliers_plot <- without_outliers %>% filter(event_type=='inversion' & event_size >50 & dgv == '') %>%
+ggplot(aes(x=log10(event_size+0.01), colour=Platform)) +
+  geom_density() + 
+  xlab("SV Length (log)")
+
+with_outliers <- in_file_processed2 %>% filter(event_type=='inversion' & event_size >50 & dgv == '') %>%
+ggplot(aes(x=log10(event_size+0.01), colour=Platform)) +
+  geom_density() + 
+  xlab("SV Length (log)")
+
+prow <- plot_grid(
+  without_outliers_plot + theme(legend.position="none"),
+  with_outliers + theme(legend.position="none"),
+  labels = c("A. Without outliers", "B. With outliers"),
+  nrow = 1
+)
+
+legend <- get_legend(
+  without_outliers_plot + theme(legend.box.margin = margin(0, 0, 0, 12))
+)
+
+plot_grid(prow, legend, rel_widths = c(3, .4))
+```
+
+```{r nanopore SV callers}
+list_of_cols = c('SAVANA', 'nanomonSV')
+
+# log
+options(scipen=4) 
+ComplexUpset::upset(
+  nanopore_only_inversions_no_dgv,
+  list_of_cols,
+  annotations = list(
+    'SV Length'=(
+      ggplot(mapping=aes(y=event_size, colour=break1_chromosome))
+      + geom_quasirandom(na.rm=TRUE)
+    )),
+  width_ratio=0.1,
+  min_size=20
+)
+```
+
+```{r investigating smaller inversions}
+nanopore_only_inversions_no_dgv_smaller <- nanopore_only_inversions_no_dgv %>% filter(event_size<=50000 & event_size>50) %>% select(tracking_id, break1_chromosome, gene1_aliases, break1_position_start, break2_position_end, event_size, SAVANA, nanomonSV, library)
+options(scipen=4) 
+ComplexUpset::upset(
+  nanopore_only_inversions_no_dgv_smaller,
+  list_of_cols,
+  annotations = list(
+    'SV Length'=(
+      ggplot(mapping=aes(y=event_size, colour=break1_chromosome))
+      + geom_quasirandom(na.rm=TRUE)
+    )),
+  width_ratio=0.1,
+  min_size=20
+)
+
+ggplot(nanopore_only_inversions_no_dgv_smaller, aes(x =library)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+sort(table(nanopore_only_inversions_no_dgv_smaller$gene1_aliases))
+
+ggplot(nanopore_only_inversions_no_dgv_smaller, aes(x=break1_chromosome)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
