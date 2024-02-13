@@ -54,7 +54,6 @@ d <- ggplot(biopsy_site, aes(x = ecDNA, y = Proportion, fill = biopsy_site)) + g
 ## Statistics for enrichment of ecDNAs among breast cancers
 
 ```{r}
-View(cancer_type)
 #Filter to breast cancers:
 BRCA <- cancer_type %>%
   dplyr::filter(cancer_type == "BRCA")
@@ -92,7 +91,6 @@ Other_cancers <- Other_cancers %>%
 
 #Join data frames together:
 BRCA_v_others <- full_join(BRCA, Other_cancers)
-View(BRCA_v_others)
 
 #Construct 2 x 2 contingency table:
 BRCA_table <- data.frame(
