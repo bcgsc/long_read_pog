@@ -18,3 +18,6 @@ RUN R -e 'remotes::install_version("alluvial", "0.1-2")'
 # R Bioconductor packages:
 #RUN R -e 'BiocManager::install("BSgenome")'
 RUN R -e 'BiocManager::install("GenomicRanges")'
+RUN R -e 'BiocManager::install("GenomicRanges")'
+RUN R -e 'BiocManager::install("ggbio")'
+RUN R -e 'BiocManager::install("EnsDb.Hsapiens.v86")'
