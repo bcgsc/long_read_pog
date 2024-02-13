@@ -29,7 +29,7 @@ Plot tumour types and biopsy sites. After creating this plot, it was further str
 biopsy_data <- read.delim('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv')
 
 # Clean up the terms
-biopsy_data <- biopsy_data %>% select(anonymous_sample_ID_tumour, tumour_type_cohort, biopsy_site_cohort) %>%
+biopsy_data <- biopsy_data %>% dplyr::select(anonymous_sample_ID_tumour, tumour_type_cohort, biopsy_site_cohort) %>%
   rename(sample = anonymous_sample_ID_tumour, tumour_type = tumour_type_cohort, biopsy_group = biopsy_site_cohort)
 biopsy_data <- biopsy_data %>% mutate(biopsy_group = gsub(" System", "", biopsy_group))
 biopsy_data <- biopsy_data %>%
