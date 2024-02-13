@@ -14,7 +14,6 @@ library(tidyverse)
 library(lubridate)
 library(survival)
 library(ggsurvfit)
-library(ggprism)
 ```
 
 ## Loading in data
