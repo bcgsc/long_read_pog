@@ -3,9 +3,7 @@
 
 on:
   pull_request:
-    types: [opened, reopened, edited]
-
-  workflow_dispatch:
+    types: [opened, reopened]
 
 name: render-rmarkdown
 
