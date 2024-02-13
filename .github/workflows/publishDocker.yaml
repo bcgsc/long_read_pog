@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Log in to the Container registry
       uses: docker/login-action@v3
@@ -28,7 +28,7 @@ jobs:
                 images: bcgsc/long-pog-jupyter
 
     - name: Build and push Jupyter Docker image
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v5
       with:
         file: container/jupyter.Dockerfile
         context: .
@@ -43,7 +43,7 @@ jobs:
                 images: bcgsc/long-pog-rmd
 
     - name: Build and push Rmd Docker image
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v5
       with:
         file: container/rmd.Dockerfile
         context: .

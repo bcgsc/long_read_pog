@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         with:
           file: container/rmd.Dockerfile
           context: .
@@ -42,4 +42,4 @@ jobs:
             else
                 echo "No R markdown found. Skipping execution."
             fi
-      - uses: stefanzweifel/git-auto-commit-action@v4
+      - uses: stefanzweifel/git-auto-commit-action@v5
