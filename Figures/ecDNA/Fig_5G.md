@@ -81,13 +81,13 @@ library(EnsDb.Hsapiens.v86)
     ## 
     ##     second, second<-
 
-    ## The following objects are masked from 'package:dplyr':
-    ## 
-    ##     first, rename
-
     ## The following object is masked from 'package:tidyr':
     ## 
     ##     expand
+
+    ## The following objects are masked from 'package:dplyr':
+    ## 
+    ##     first, rename
 
     ## The following object is masked from 'package:utils':
     ## 
@@ -108,13 +108,13 @@ library(EnsDb.Hsapiens.v86)
     ## 
     ##     %within%
 
-    ## The following objects are masked from 'package:dplyr':
-    ## 
-    ##     collapse, desc, slice
-
     ## The following object is masked from 'package:purrr':
     ## 
     ##     reduce
+
+    ## The following objects are masked from 'package:dplyr':
+    ## 
+    ##     collapse, desc, slice
 
     ## Loading required package: GenomeInfoDb
 
