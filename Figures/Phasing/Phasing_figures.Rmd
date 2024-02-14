@@ -274,9 +274,34 @@ boxplot.rate <- ggplot(data, aes(x = group, y = percent)) +
   scale_y_continuous(name = 'Phasing rate (%)', limits = c(0, 100), expand = c(0.002, 0.002))
 ```
 
-## Final layout and output as PDF (optional)
+## Compiled figure 3a,b
 
 ```{r output, warning=FALSE}
+#Plot panel layouts
+empty.plot <- ggplot(phasing) + geom_blank() + theme_void()
+
+a1 <- ggarrange(
+  ggarrange(boxplot.reads, empty.plot, nrow = 1, widths = c(4.2, 1)),
+  ggarrange(scatterplot.reads, boxplot.blocks, nrow = 1, widths = c(4.2, 1)),
+  nrow = 2, heights = c(1, 4.2))
+a2 <- ggarrange(
+  ggarrange(empty.plot, empty.plot, nrow = 1, widths = c(4.2, 1)),
+  ggarrange(scatterplot.phasing, boxplot.phasing, nrow = 1, widths = c(4.2, 1)),
+  nrow = 2, heights = c(1, 4.2))
+b <- ggarrange(
+  ggarrange(boxplot.length, empty.plot, nrow = 1, widths = c(4.2, 1)),
+  ggarrange(scatterplot.genes, boxplot.rate, nrow = 1, widths = c(4.2, 1)),
+  nrow = 2, heights = c(1, 4.2))
+
+a1
+a2
+b
+
+```
+
+## Final layout and output as PDF (optional)
+
+```{r output-files, warning=FALSE}
 #Plot panel layouts
 empty.plot <- ggplot(phasing) + geom_blank() + theme_void()
 
@@ -299,6 +324,6 @@ ggarrange(a1, a2, b, nrow = 1, labels = c('a', '', 'b'), font.label = list(size 
 dev.off()
 
 pdf('phasing-stats.pdf', width = 18/2.54, height = 5.4/2.54)
-ggarrange(a1, b2, b, nrow = 1, labels = c('a', '', 'b'), font.label = list(size = 10))
+ggarrange(a1, a2, b, nrow = 1, labels = c('a', '', 'b'), font.label = list(size = 10))
 dev.off()
 ```
