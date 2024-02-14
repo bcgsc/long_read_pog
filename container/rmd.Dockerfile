@@ -13,8 +13,13 @@ RUN R -e 'remotes::install_version("stringr", "1.5.0")'
 RUN R -e 'remotes::install_version("reshape2", "1.4.4")'
 RUN R -e 'remotes::install_version("ggpubr", "0.6.0")'
 RUN R -e 'remotes::install_version("ggplot2", "3.4.4")'
+RUN R -e 'remotes::install_version("ggsurvfit", "1.0.0")'
 RUN R -e 'remotes::install_version("alluvial", "0.1-2")'
+RUN R -e 'remotes::install_version("R.utils", "2.12.3")'
 
 # R Bioconductor packages:
 #RUN R -e 'BiocManager::install("BSgenome")'
 RUN R -e 'BiocManager::install("GenomicRanges")'
+RUN R -e 'BiocManager::install("GenomicRanges")'
+RUN R -e 'BiocManager::install("ggbio")'
+RUN R -e 'BiocManager::install("EnsDb.Hsapiens.v86")'

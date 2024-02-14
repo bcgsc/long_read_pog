@@ -1,29 +1,17 @@
----
-title: "Cohort figure generation (Figure 1a,b and Extended Data Figure 1a)"
-author: "Erin Pleasance"
-date: "`r Sys.Date()`"
-output: github_document
----
+Cohort figure generation (Figure 1a,b and Extended Data Figure 1a)
+================
+Erin Pleasance
+2024-02-14
 
-This is an R markdown used to generate figures describing the overall cohort.
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
-library(ggplot2)
-library(tidyverse)
-library(alluvial)
-library(data.table)
-library(dplyr)
-```
+This is an R markdown used to generate figures describing the overall
+cohort.
 
 ## Tumour types (Figure 1a)
 
-Plot tumour types and biopsy sites. After creating this plot, it was further stretched and coloured in Illustrator.
+Plot tumour types and biopsy sites. After creating this plot, it was
+further stretched and coloured in Illustrator.
 
-
-```{r import-data, warning=FALSE }
-
+``` r
 # File with tumour type and biopsy groupings
 #biopsy_data <- read.delim('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv')
 biopsy_data_full <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv')
@@ -107,15 +95,15 @@ alluvial(freqs[,1:2], freq=freqs$`n()`, hide = freqs$`n()` < 2,
          xw=0.2, 
          alpha = 0.6
          )
-
 ```
+
+![](Cohort_figures_files/figure-gfm/import-data-1.png)<!-- -->
 
 ## Tumour genomic features (Figure 1b)
 
 Plot HRD, TMB, tumour content for each of the tumour groups.
 
-```{r genomic, warning=FALSE }
-
+``` r
 #File with genomic features (same as file used above)
 
 samples <- read.delim('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv')
@@ -149,7 +137,11 @@ ggplot(samples %>% group_by(Tumour_type), aes(x = Tumour_type, y = TMB)) +
   theme(axis.title.y=element_blank(), axis.text.y=element_text(size=12, colour="black"),
         axis.title.x=element_text(size=14, colour="black"), axis.text.x=element_text(size=12, colour="black"),
         legend.position="none")
+```
 
+![](Cohort_figures_files/figure-gfm/genomic-1.png)<!-- -->
+
+``` r
 # Boxplot of HRDetect by tumour type
 ggplot(samples %>% group_by(Tumour_type), aes(x = Tumour_type, y = HRDetect)) +
   geom_boxplot(outlier.shape = NA) + geom_jitter(height=0, width=0.2, aes(color=Tumour_type)) +
@@ -161,7 +153,11 @@ ggplot(samples %>% group_by(Tumour_type), aes(x = Tumour_type, y = HRDetect)) +
   theme(axis.title.y=element_blank(), axis.text.y=element_text(size=12, colour="black"),
         axis.title.x=element_text(size=14, colour="black"), axis.text.x=element_text(size=12, colour="black"),
         legend.position="none")
+```
 
+![](Cohort_figures_files/figure-gfm/genomic-2.png)<!-- -->
+
+``` r
 # Boxplot of tumour content by tumour type
 ggplot(samples %>% group_by(Tumour_type), aes(x = Tumour_type, y = tumour_content)) +
   geom_boxplot(outlier.shape = NA) + geom_jitter(height=0, width=0.2, aes(color=Tumour_type)) +
@@ -176,5 +172,6 @@ ggplot(samples %>% group_by(Tumour_type), aes(x = Tumour_type, y = tumour_conten
   theme(axis.title.y=element_blank(), axis.text.y=element_text(size=12, colour="black"),
         axis.title.x=element_text(size=14, colour="black"), axis.text.x=element_text(size=12, colour="black"),
         legend.position="none")
-
 ```
+
+![](Cohort_figures_files/figure-gfm/genomic-3.png)<!-- -->

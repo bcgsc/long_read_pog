@@ -12,14 +12,16 @@ suppressMessages(library(tidyverse))
 suppressMessages(library(ggpubr))
 suppressMessages(library(MetBrewer))
 suppressMessages(library(ggbeeswarm))
-
+suppressMessages(library(data.table))
 options(dplyr.summarise.inform = FALSE)
 
 # Import ASE data
-data <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/ASE/impalaResultAnonymous.tsv.gz", show_col_types = FALSE)
+#data_2 <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/ASE/impalaResultAnonymous.tsv.gz", show_col_types = FALSE)
+data <- fread("https://www.bcgsc.ca/downloads/nanopore_pog/ASE/impalaResultAnonymous.tsv.gz")
 
 # Import expression matrix data
-expressionMatrix <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/ASE/expressionMatrix.tsv.gz", show_col_types = FALSE)
+#expressionMatrix <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/ASE/expressionMatrix.tsv.gz", show_col_types = FALSE)
+expressionMatrix <- fread("https://www.bcgsc.ca/downloads/nanopore_pog/ASE/expressionMatrix.tsv.gz")
 ```
 
 # ASE overview
