@@ -1,6 +1,6 @@
 ---
 title: "Fig_5G_v2"
-output: html_document
+output: github_document
 date: "2024-02-06"
 ---
 

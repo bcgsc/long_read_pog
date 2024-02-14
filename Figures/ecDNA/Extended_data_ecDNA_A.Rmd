@@ -1,6 +1,6 @@
 ---
 title: "Extended_data_ecDNA_A"
-output: html_document
+output: github_document
 date: "2023-08-31"
 ---
 

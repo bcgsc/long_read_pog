@@ -2,8 +2,7 @@
 title: "Cohort figure generation (Figure 1a,b and Extended Data Figure 1a)"
 author: "Erin Pleasance"
 date: "`r Sys.Date()`"
-#output: github_document
-output: html_document
+output: github_document
 ---
 
 This is an R markdown used to generate figures describing the overall cohort.
