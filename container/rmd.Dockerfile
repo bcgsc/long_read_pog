@@ -15,6 +15,7 @@ RUN R -e 'remotes::install_version("ggpubr", "0.6.0")'
 RUN R -e 'remotes::install_version("ggplot2", "3.4.4")'
 RUN R -e 'remotes::install_version("ggsurvfit", "1.0.0")'
 RUN R -e 'remotes::install_version("alluvial", "0.1-2")'
+RUN R -e 'remotes::install_versopm("R.utils", "2.12.3")'
 
 # R Bioconductor packages:
 #RUN R -e 'BiocManager::install("BSgenome")'
