@@ -23,9 +23,9 @@ library(ggpubr)
 ```{r import-data, warning=FALSE}
 #Load data
 info <- read.table('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv', sep = '\t', header = T)
-phasing <- read.csv('/projects/epleasance/POG/manuscripts/LongPOG/figure_code/phasing_figure/phasing-stats.csv')
-census <- read.csv('/projects/epleasance/POG/manuscripts/LongPOG/figure_code/phasing_figure/cosmic-gene-census.csv')
-tumours <- read.csv('/projects/epleasance/POG/manuscripts/LongPOG/figure_code/phasing_figure/ensembl100-genes+promoters-blocks-summary-tumours.csv')
+phasing <- read.csv('https://www.bcgsc.ca/downloads/nanopore_pog/phasing/phasing-stats.csv')
+census <- read.csv('https://www.bcgsc.ca/downloads/nanopore_pog/phasing/cosmic-gene-census.csv')
+tumours <- read.csv('https://www.bcgsc.ca/downloads/nanopore_pog/phasing/ensembl100-genes+promoters-blocks-summary-tumours.csv')
 
 #Set colours
 palette <- c('#7C3A88', '#8A7EC7', '#69BDC3', '#0B8892')
