@@ -1,0 +1,5 @@
+chr - hs1 8 0 145138636 chr8
+chr - hs2 8 0 145138636 chr8
+chr - hs3 8 0 145138636 chr8
+chr - hs4 8 0 145138636 chr8
+chr - hs5 8 0 145138636 chr8
