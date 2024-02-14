@@ -1,0 +1,32 @@
+Extended_data_ecDNA_C
+================
+2023-08-31
+
+## Loading in required packages
+
+``` r
+library(tidyverse)
+library(lubridate)
+library(survival)
+library(ggsurvfit)
+```
+
+## Loading in data
+
+``` r
+Long_POG_df <- read.delim("https://www.bcgsc.ca/downloads/nanopore_pog/ecDNA/Long_POG_ecDNA_survival.txt", header = T, stringsAsFactors = F)
+```
+
+## Composing and printing plot
+
+``` r
+survfit2(Surv(time, status) ~ ecDNA, data = Long_POG_df) %>% 
+  ggsurvfit() + 
+  labs(x = "Time (days)") + 
+  add_confidence_interval() + 
+  add_pvalue(caption = "Log-rank {p.value}") + 
+  add_legend_title() + 
+  add_risktable() 
+```
+
+![](Extended_data_ecDNA_C_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
