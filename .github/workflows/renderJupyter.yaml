@@ -8,6 +8,7 @@ on:
     types:
       - opened
       - reopened
+      - edited
 
 jobs:
   run_notebooks:
@@ -15,10 +16,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v5
       with:
         file: container/jupyter.Dockerfile
         context: .
@@ -39,4 +40,4 @@ jobs:
               echo "No Jupyter notebooks found. Skipping execution."
           fi 
 
-    - uses: stefanzweifel/git-auto-commit-action@v4 
+    - uses: stefanzweifel/git-auto-commit-action@v5 
