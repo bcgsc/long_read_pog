@@ -15,6 +15,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(alluvial)
+library(data.table)
 
 ```
 
@@ -26,7 +27,9 @@ Plot tumour types and biopsy sites. After creating this plot, it was further str
 ```{r import-data, warning=FALSE }
 
 # File with tumour type and biopsy groupings
-biopsy_data <- read.delim('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv')
+#biopsy_data <- read.delim('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv')
+biopsy_data <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv')
+
 
 # Clean up the terms
 biopsy_data <- biopsy_data %>% dplyr::select(anonymous_sample_ID_tumour, tumour_type_cohort, biopsy_site_cohort) %>%
