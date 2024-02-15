@@ -1,0 +1,262 @@
+---
+title: "Long-read POG QC Stats"
+author: "Kieran O'Neill"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup_chunk_options, include=FALSE, results="hide", warning=FALSE}
+library(knitr)
+
+opts_chunk$set(fig.path=paste0('figures/mohccn-', format(Sys.time(), "%Y-%m-%d")),
+			   dev=c("png","pdf"),
+			   dev.args = list(png = list(type = "cairo")),
+			   fig.width=2,
+			   fig.height=2,
+			   dpi=200,
+			   fig.show='hold',
+			   fig.lp="fig:",
+			   cache=FALSE,
+			   par=TRUE,
+			   echo=FALSE,
+			   message=FALSE,
+			   warning=FALSE)
+
+```
+
+
+```{r library_imports, include=FALSE, results="hide", warning=FALSE}
+library(tidyverse)
+theme_set(theme_bw(base_size=7))
+theme_update(text=element_text(size=7))
+library(data.table)
+library(egg)
+library(MetBrewer)
+library(ggbeeswarm)
+library(lubridate)
+```
+
+## Basic stats
+
+```{r load_data}
+long_pog_cohort <- fread("https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv")
+BQ.moh_pog <- fread("https://www.bcgsc.ca/downloads/nanopore_pog/sequencing_stats/long_read_pog_qc_stats.tsv")
+```
+
+## Per-sample yield and coverage
+
+```{r pog, fig.width=14, fig.height=4}
+# GRCh38.p14 RefSeq assembly genome size 
+# https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000001405.40/
+GENOME_SIZE_GB = 3.099441038
+
+
+# Merge to samples:
+BQ.moh_pog$original_source <- factor(BQ.moh_pog$original_source)
+pog.yield.by.sample <-  group_by(BQ.moh_pog, original_source) %>%
+  summarise(read_length_sum=sum(read_length_sum), 
+            flowcells=n(),
+            flowcell_ids=paste(fc, collapse=','),
+            libraries=paste(lib, collapse=','))
+
+pog.yield.by.sample$yield_gb <- round(pog.yield.by.sample$read_length_sum/10^9)
+# 3.055Gbp is the size of CHM13-T2T, so one of the most accurate recent measures of the haploid human genome size:
+pog.yield.by.sample$Xcov <- round(pog.yield.by.sample$yield_gb/GENOME_SIZE_GB)
+
+pog.yield.by.sample$tumour <- !grepl('-PB', pog.yield.by.sample$original_source)
+
+pog.yield.by.sample$sample_type <- rep('Tumour', nrow(pog.yield.by.sample))
+pog.yield.by.sample$sample_type[!pog.yield.by.sample$tumour] <- 'Normal'
+
+pog.yield.by.sample$flowcells <- factor(pog.yield.by.sample$flowcells, levels=c(1,2,3))
+
+ggplot(pog.yield.by.sample) +
+  aes(x=reorder(original_source, read_length_sum), y=read_length_sum/10^9)  +
+  geom_bar(stat="identity") +
+  theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1))+
+  xlab("Sample") +
+  ylab("Gbp of Sequence") +
+  scale_y_continuous(breaks=c(0,25,50,75, 100,125, 150), limits = c(0,150))
+
+
+ggplot(pog.yield.by.sample) +
+  aes(x=reorder(original_source, read_length_sum), y=read_length_sum/10^9/GENOME_SIZE_GB)  +
+  geom_bar(stat="identity") +
+  theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1))+
+  xlab("Sample") +
+  ylab("Fold coverage (approx)")+
+  scale_y_continuous(breaks=c(0,10,20, 30, 40), limits = c(0,40))
+
+
+pog.yield.by.sample <- pog.yield.by.sample %>% dplyr::filter(read_length_sum > 10^9)
+
+pog.yield.summary <- pog.yield.by.sample %>% 
+  group_by(tumour) %>%
+  summarise(n=n(),median_yield=median(yield_gb), minyield=min(yield_gb), maxyield=max(yield_gb), medianXcov=median(Xcov), minX=min(Xcov), maxX=max(Xcov))
+
+pog.yield.summary <- rbind(pog.yield.summary, 
+                           c('All', 
+                             unlist(
+                               summarise(pog.yield.by.sample, n=nrow(pog.yield.by.sample),
+                                         median_yield=median(yield_gb), 
+                                         minyield=min(yield_gb),
+                                         maxyield=max(yield_gb), 
+                                         medianXcov=median(Xcov), 
+                                         minX=min(Xcov),
+                                         maxX=max(Xcov))
+                               )
+                             )
+                           )
+
+kable(pog.yield.summary)
+
+
+
+
+
+```
+
+```{r yield_by_sample_boxplot}
+set.seed(42)
+xcov_plot <- ggplot(pog.yield.by.sample) +
+  aes(y=read_length_sum/10^9/GENOME_SIZE_GB, x=sample_type, colour=flowcells)  +
+   # geom_jitter(width = 0.15, show.legend=FALSE, size=2) +
+    #geom_boxplot(colour='grey', fill=NA, lwd=1) +
+  geom_quasirandom(cex=0.5, size=1, width=0.3 ) +
+    stat_summary(fun = median, fun.min = median, fun.max = median,
+                 geom = "crossbar", width = 0.7, fatten=1, aes(colour=NULL)) +
+  scale_colour_met_d('Renoir')+
+  theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1))+
+  xlab("") +
+  ylab("")+
+  scale_y_continuous(breaks=c(0,20,40,60), limits = c(0,70)) +
+  ggtitle('Coverage')+ 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+We sequenced `r nrow(long_pog_cohort)` tumours, of which `r nrow(long_pog_cohort %>% select(-epigenomic_homd) %>% dplyr::filter(has_normal=='Y'))` had matching normal tissue also sequenced on the Nanopore. 
+
+
+## QC dot plots
+
+```{r sparks_dotplots, fig.width=168/25.4, fig.height=45/25.4, dpi=300}
+#knitr::opts_chunk$set(fig.width=unit(168,"mm"), fig.height=unit(45,"mm"))
+set.seed(42)
+BQ.pog <- BQ.moh_pog
+
+qc.bbt <- BQ.pog[, c('fc', 'matched_target_genome', 'micro_contam')]
+qc.bbt.long <- pivot_longer(qc.bbt, 
+                        cols=everything()[-c(1)],
+                         names_to = 'Metric')
+
+
+bbt.plot <- ggplot(qc.bbt.long) +
+  aes(x=Metric, y=value) +
+  #geom_boxplot(position = 'identity', outlier.alpha=0) +
+  stat_summary(fun = median, fun.min = median, fun.max = median,
+                 geom = "crossbar", width = 0.5, fatten=1) +
+  #geom_jitter( width = 0.15, size=2) +
+  geom_quasirandom(cex=0.5, width = 0.15, size=1) +
+  scale_y_continuous(labels=scales::percent) +
+  ylab('') +
+  xlab('') +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1)) +
+  scale_x_discrete(labels=c("matched_target_genome" = "On-target", "micro_contam" = "Microbial")) +
+  ggtitle('BBT')+ 
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+
+## Yield:
+
+qc.bp <- BQ.pog[, c('fc', "read_length_sum", "read_length_sum_gt20k", "read_length_sum_gt50k", "read_length_sum_gt100k")]
+qc.bp.long <- pivot_longer(qc.bp, 
+                        cols=everything()[-c(1)],
+                         names_to = 'Metric')
+
+qc.bp.long$Metric <- factor(qc.bp.long$Metric, levels=c("read_length_sum", "read_length_sum_gt20k", "read_length_sum_gt50k", "read_length_sum_gt100k"))
+qc.bp.long$value <- as.numeric(qc.bp.long$value)
+
+bp.plot <- ggplot(qc.bp.long) +
+  aes(x=Metric, y=value/10^9) +
+  stat_summary(fun = median, fun.min = median, fun.max = median,
+                 geom = "crossbar", width = 0.5, fatten=1) +
+  #geom_jitter( width = 0.15, show.legend = FALSE, size=2) +
+  geom_quasirandom(cex=0.5, width = 0.15, size=1,show.legend = FALSE) +
+  ylab('Gb') +
+  xlab('') +
+  scale_y_continuous(limits = c(0,120)) +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1)) +
+  scale_x_discrete(labels=c("read_length_sum" = "All", 
+                            "read_length_sum_gt20k"=">20Kb",
+                            "read_length_sum_gt50k"=">50Kb",
+                            "read_length_sum_gt100k"=">100Kb")) +
+  ggtitle('Yield')+ 
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+
+## N50:
+
+qc.n50 <- BQ.pog[, c('fc', 'n50')]
+qc.n50.long <- pivot_longer(qc.n50, 
+                        cols=everything()[-c(1)],
+                         names_to = 'Metric')
+qc.n50.long$value <- as.numeric(qc.n50.long$value)
+
+n50.plot <- ggplot(qc.n50.long) +
+  aes(x=Metric, y=value/10^3) +
+  stat_summary(fun = median, fun.min = median, fun.max = median,
+                 geom = "crossbar", width = 0.5, fatten=1) +
+  #geom_jitter(width = 0.15, show.legend = FALSE, size=2) +
+  geom_quasirandom(cex=0.5, width = 0.15, size=1,show.legend = FALSE) +
+  scale_y_continuous(limits = c(0,40))+
+  ylab('Kb') +
+  xlab('') +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1)) +
+  scale_x_discrete(labels=c("n50" = "All reads"))+
+  ggtitle('N50')+ 
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+
+
+## Base error
+
+qc.error <- BQ.pog[, c('fc', 'chimerism_prop', 'error_rate_by_qualimap')]
+qc.error.long <- pivot_longer(qc.error, 
+                        cols=everything()[-c(1)],
+                         names_to = 'Metric')
+
+
+error.plot <- ggplot(qc.error.long) +
+  aes(x=Metric, y=value) +
+  stat_summary(fun = median, fun.min = median, fun.max = median,
+                 geom = "crossbar", width = 0.5, fatten=1) +
+  #geom_jitter(width = 0.15, show.legend=FALSE, size=2) +
+  geom_quasirandom(cex=0.5, width = 0.15, size=1,show.legend = FALSE) +
+  scale_y_continuous(labels=scales::percent, limits = c(0,0.08)) +
+  ylab('') +
+  xlab('') +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1)) +
+  scale_x_discrete(labels=c("chimerism_prop" = "Chimeric", "error_rate_by_qualimap" = "Error")) +
+  ggtitle('Error')+ 
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+
+ggarrange(bp.plot, n50.plot, error.plot, bbt.plot, xcov_plot,
+          nrow=1)
+
+```
+
+## Textual Summary
+
+Primary sequencing results are summarized in Figure 1.d. Sequencing yielded a median of `r pog.yield.summary$medianXcov[1]`-fold coverage for normal samples and `r pog.yield.summary$medianXcov[2]`-fold for the tumours. Reads were relatively long, with a median N50 of `r signif( median(BQ.pog$n50)/10^3, 3)` kbp, and the longest read across this data set reaching `r max(BQ.pog$read_length_max)`bp. `r signif(median(BQ.pog$read_length_sum_gt20k, na.rm=TRUE)/median(BQ.pog$read_length_sum) * 100, 3)`% of yield derived from reads greater than 20Kb in length. Base error (edit distance of aligned reads to the GRCh38 reference) was `r median(BQ.pog$error_rate_by_qualimap, na.rm=TRUE)*100`%. This is similar to other runs on this chemistry. Chimeric artifacts were present in a median of `r median(BQ.pog$chimerism_prop, na.rm=TRUE)*100`% of reads, also similar to other runs with this sequencing chemistry. There was no evidence of microbial contamination in any of the samples, wtih a median of `r median(qc.bbt$matched_target_genome)*100`% of reads matching GRCh38, and less than `r max(qc.bbt$micro_contam)*100`% of reads matching microbial taxa in any sample.
+
+
+
+Approximate fold coverage per sample sequenced, with medians of just below `r pog.yield.summary$medianXcov[1]`X for normals, and `r pog.yield.summary$medianXcov[2]`X for tumours. Per-flowcell quality control statistics. A median yield of `r signif(median(BQ.pog$read_length_sum)/10^9, 3)` Gbp per flowcell was observed, with `r signif(median(BQ.pog$read_length_sum_gt20k, na.rm=TRUE)/median(BQ.pog$read_length_sum) * 100, 3)`% of that yield from reads greater than 20Kb in length. The median read N50 was `r signif( median(BQ.pog$n50)/10^3, 3)`kbp. Base error (edit distance to reference) was `r median(BQ.pog$error_rate_by_qualimap, na.rm=TRUE)*100`%, similar to other runs on this chemistry. We assessed chimeric artifacts, which were present in a median of `r median(BQ.pog$chimerism_prop, na.rm=TRUE)*100`% of reads. By BBT, a median of `r median(qc.bbt$matched_target_genome)*100`% of reads matched the human reference, while no sample showed more than `r max(qc.bbt$micro_contam)*100`% of reads matching microbial taxa.
+
+
+
