@@ -180,7 +180,6 @@ in_file_processed_tumour_comparison_copy <- in_file_processed2
 in_file_processed_tumour_comparison <- in_file_processed2
 in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2_ins.tab.gz', encoding="UTF-8") %>% filter(event_type == 'insertion'), FALSE)
 sample_sheet <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv', encoding="UTF-8")
-oncoKB <- fread('/projects/epleasance/dbs/oncokb/cancerGeneList_210714.tsv', encoding="UTF-8")
 ```
 
 ### Preprocessing and Initial Statistics
@@ -244,16 +243,16 @@ in_file_processed_tumour_comparison_no_ins$break2_chromosome <- as.integer(in_fi
 in_file_processed_tumour_comparison <- bind_rows(in_file_processed_tumour_comparison_no_ins,in_file_processed_tumour_comparison_insertion)
 
 in_file_processed_tumour_comparison <- merge(in_file_processed_tumour_comparison, sample_sheet, by = "library")
-in_file_processed_tumour_comparison$library <- in_file_processed_tumour_comparison$Anonymous_sample_ID_normal
+in_file_processed_tumour_comparison$library <- in_file_processed_tumour_comparison$anonymous_sample_ID_normal
 
-in_file_processed_tumour_comparison <- as.data.frame(in_file_processed_tumour_comparison)[, !(names(in_file_processed_tumour_comparison) %in% c("Anonymous_sample_ID_normal"))]
+in_file_processed_tumour_comparison <- as.data.frame(in_file_processed_tumour_comparison)[, !(names(in_file_processed_tumour_comparison) %in% c("anonymous_sample_ID_normal"))]
 ```
 ## Global SV Measures 
 
 ### Main Figure a. 
 ```{r main figure a }
 
-all_tumour_count <- fread('ready_for_graph1.tsv')
+all_tumour_count <- as.data.frame(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/ready_for_graph1.tsv'))
 
 result1 <- all_tumour_count %>% filter(SVTYPE == 'deletion' | SVTYPE == 'insertion') %>%
 ggplot(aes(x = SVTYPE, y=Count)) +
