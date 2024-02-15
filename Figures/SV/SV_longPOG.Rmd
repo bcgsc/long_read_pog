@@ -170,12 +170,12 @@ pre_process_mavis_by_library_insertion <- function(x, collapse_svs=TRUE) {
 
 ```{r load files}
 
-in_file_processed2 <- pre_process_mavis_by_library(read.delim('combined2.tab'))
-in_file_processed_tumour_comparison_copy <- pre_process_mavis_by_library(read.delim('combined2.tab'), FALSE)
-in_file_processed_tumour_comparison <- pre_process_mavis_by_library(read.delim('combined2.tab'), FALSE)
-in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(read.delim('combined2_ins.tab') %>% filter(event_type == 'insertion'), FALSE)
-sample_sheet <- read.delim('long_pog_sample.tab')
-oncoKB <- read.delim('cancerGeneList_210714.tsv')
+in_file_processed2 <- pre_process_mavis_by_library(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2.tab.gz'))
+in_file_processed_tumour_comparison_copy <- in_file_processed2
+in_file_processed_tumour_comparison <- in_file_processed2
+in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2_ins.tab.gz') %>% filter(event_type == 'insertion'), FALSE)
+sample_sheet <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv')
+oncoKB <- fread('cancerGeneList_210714.tsv')
 ```
 
 ### Preprocessing and Initial Statistics
@@ -220,7 +220,7 @@ in_file_processed_tumour_comparison <- in_file_processed_tumour_comparison[, !(n
 ### Main Figure a. 
 ```{r main figure a }
 
-all_tumour_count <- read.delim('ready_for_graph1.tsv')
+all_tumour_count <- fread('ready_for_graph1.tsv')
 
 result1 <- all_tumour_count %>% filter(SVTYPE == 'deletion' | SVTYPE == 'insertion') %>%
 ggplot(aes(x = SVTYPE, y=Count)) +
