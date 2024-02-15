@@ -6,20 +6,23 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-suppressPackageStartupMessages({
-  library('ggplot2')
-  library('dplyr')
-  library('data.table')
-  library('cowplot')
-  library('tidyr')
-  library('dplyr')
-  library('ComplexUpset')
-  library('ggbeeswarm')
-  library('stringr')
-  library('reshape2')
-  library('GenomicRanges')
-  library('RColorBrewer')
-})
+library('ggplot2')
+library('dplyr')
+library('data.table')
+library('cowplot')
+library('tidyr')
+library('dplyr')
+library('ComplexUpset')
+library('ggbeeswarm')
+library('stringr')
+library('reshape2')
+library('GenomicRanges')
+library('RColorBrewer')
+
+library('conflicted')
+conflict_prefer("filter", "dplyr")
+conflict_prefer("select", "dplyr")
+conflict_prefer("rename", "dplyr")
 ```
 
 ```{r helper1:preprocessing functions by librarys}
@@ -170,14 +173,14 @@ pre_process_mavis_by_library_insertion <- function(x, collapse_svs=TRUE) {
 
 ```{r load files}
 
-mavis_data <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2.tab.gz',encoding="Latin-1")
+mavis_data <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2.tab.gz',encoding="UTF-8")
 
 in_file_processed2 <- pre_process_mavis_by_library(mavis_data)
 in_file_processed_tumour_comparison_copy <- in_file_processed2
 in_file_processed_tumour_comparison <- in_file_processed2
-in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2_ins.tab.gz', encoding="Latin-1") %>% filter(event_type == 'insertion'), FALSE)
-sample_sheet <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv', encoding="Latin-1")
-oncoKB <- fread('cancerGeneList_210714.tsv')
+in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2_ins.tab.gz', encoding="UTF-8") %>% filter(event_type == 'insertion'), FALSE)
+sample_sheet <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv', encoding="UTF-8")
+oncoKB <- fread('/projects/epleasance/dbs/oncokb/cancerGeneList_210714.tsv', encoding="UTF-8")
 ```
 
 ### Preprocessing and Initial Statistics
