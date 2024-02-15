@@ -170,11 +170,13 @@ pre_process_mavis_by_library_insertion <- function(x, collapse_svs=TRUE) {
 
 ```{r load files}
 
-in_file_processed2 <- pre_process_mavis_by_library(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2.tab.gz'))
+mavis_data <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2.tab.gz',encoding="Latin-1")
+
+in_file_processed2 <- pre_process_mavis_by_library(mavis_data)
 in_file_processed_tumour_comparison_copy <- in_file_processed2
 in_file_processed_tumour_comparison <- in_file_processed2
-in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2_ins.tab.gz') %>% filter(event_type == 'insertion'), FALSE)
-sample_sheet <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv')
+in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2_ins.tab.gz', encoding="Latin-1") %>% filter(event_type == 'insertion'), FALSE)
+sample_sheet <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv', encoding="Latin-1")
 oncoKB <- fread('cancerGeneList_210714.tsv')
 ```
 
