@@ -36,7 +36,6 @@ library(data.table)
 library(egg)
 library(MetBrewer)
 library(ggbeeswarm)
-library(lubridate)
 ```
 
 ## Basic stats
@@ -137,7 +136,7 @@ xcov_plot <- ggplot(pog.yield.by.sample) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-We sequenced `r nrow(long_pog_cohort)` tumours, of which `r nrow(long_pog_cohort %>% select(-epigenomic_homd) %>% dplyr::filter(has_normal=='Y'))` had matching normal tissue also sequenced on the Nanopore. 
+We sequenced `r nrow(long_pog_cohort)` tumours, of which `r nrow(long_pog_cohort %>% dplyr::select(-epigenomic_homd) %>% dplyr::filter(has_normal=='Y'))` had matching normal tissue also sequenced on the Nanopore. 
 
 
 ## QC dot plots
