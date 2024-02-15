@@ -17,6 +17,7 @@ library('stringr')
 library('reshape2')
 library('GenomicRanges')
 library('RColorBrewer')
+library('scales')
 
 library('conflicted')
 conflict_prefer("filter", "dplyr")
@@ -257,13 +258,13 @@ result1 <- all_tumour_count %>% filter(SVTYPE == 'deletion' | SVTYPE == 'inserti
 ggplot(aes(x = SVTYPE, y=Count)) +
   geom_boxplot(outlier.shape=NA)+ylim(0,41000)+
   geom_quasirandom(alpha=0.4) +
-  labs(x = "", y = "Count")  + theme_bw() 
+  labs(x = "", y = "Count")  + theme_classic(base_size=10) 
 
 result1_2 <- all_tumour_count %>% filter(SVTYPE != 'deletion' & SVTYPE != 'insertion') %>%
 ggplot(aes(x = SVTYPE, y=Count)) +
   geom_boxplot(outlier.shape=NA)+
   geom_quasirandom(alpha=0.4) +
-  labs(x = "", y = "Count")  + theme_bw() 
+  labs(x = "", y = "Count")  + theme_classic(base_size=10) 
 
 
 prow2 <- plot_grid(
@@ -279,7 +280,7 @@ result2 <- in_file_processed_tumour_comparison %>%
   ggplot(aes(x = event_type, y=count)) +
     geom_boxplot(outlier.shape=NA)+
     geom_quasirandom(alpha=0.4) +
-    labs(x = "Event Type", y = "Count") + theme_bw() 
+    labs(x = "Event Type", y = "Count") + theme_classic(base_size=10) 
 
 plot_grid(prow2, result2, labels = NULL, nrow =2)
 
@@ -331,23 +332,26 @@ generate_density_main <- function(x, input_event_type, xlab_sv_type) {
   a <- x %>% filter(event_type==input_event_type) %>%
   ggplot(aes(x=event_size,colour=Platform)) +
     geom_density() +
-    xlab(paste(xlab_sv_type,'Length (basepair)',sep=' ')) +
-    scale_x_continuous(trans = scales::log_trans(),
-                  breaks = scales::log_breaks(),
-                  labels = function(x) format(x, scientific = TRUE)) + 
+   # xlab(paste(xlab_sv_type,'Length (basepair)',sep=' ')) +
+    xlab('') + 
+    scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x)),
+                  limits=c(50,10^9)
+                  ) + 
   coord_trans(x="log10") + 
-  theme_bw() + 
+  theme_classic(base_size=10) + 
   theme(legend.position="none") +
   theme(
         plot.margin = margin(10, 15, 10, 10))
 
-  my.labels <- c('Illumina\n only','Illumina and\n Nanopore','Nanopore\n only')
+  my.labels <- c('I','I+N','N')
 
   
-  b <- x %>% filter(event_type==input_event_type) %>% ggplot(aes(x=Platform, fill=Platform)) + geom_bar() + theme_bw() + theme(legend.position="none") +
+  b <- x %>% filter(event_type==input_event_type) %>% ggplot(aes(x=Platform, fill=Platform)) + geom_bar() + theme_classic(base_size=10) + theme(legend.position="none") +
   scale_x_discrete(labels= my.labels) +
   xlab('') + 
-  ylab(paste(xlab_sv_type,'\nCount',sep=' ')) 
+#  ylab(paste(xlab_sv_type,'s',sep='')) 
+  ylab(substr(xlab_sv_type,1,3)) 
   c <- plot_grid(b,a)
   return(c)
 }
