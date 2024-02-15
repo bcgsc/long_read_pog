@@ -15,7 +15,7 @@ library(ggbio)
 library(EnsDb.Hsapiens.v86)
 library(patchwork)
 conflicts_prefer(ggbio::autoplot)
-conflicts_prefer(ggplot::xlim)
+conflicts_prefer(ggplot2::xlim)
 ```
 
 
