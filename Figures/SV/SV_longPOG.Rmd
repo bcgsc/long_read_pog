@@ -1,8 +1,7 @@
 ---
 title: "SV_longPOG"
 output:
-  pdf_document: default
-  html_document: default
+  github_document
 ---
 
 ```{r setup, include=FALSE}
