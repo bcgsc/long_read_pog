@@ -14,6 +14,7 @@ library(tidyverse)
 library(ggbio)
 library(EnsDb.Hsapiens.v86)
 library(patchwork)
+conflicts_prefer(ggbio::autoplot)
 ```
 
 
