@@ -189,16 +189,29 @@ For the global analyses we exclude events <50 bp.
 ```{r columns}
 
 in_file_processed2$Illumina_High_Quality[in_file_processed2$Illumina_High_Quality == "True_and_False"] <- 'True' 
-in_file_processed2 <- in_file_processed2 %>% filter(replace_na(TRUE) & dgv == '') %>% filter(event_size>50|ins_size>50) %>% filter(break1_chromosome!='X'|break2_chromosome!='X') %>% filter(break1_chromosome!='Y'|break2_chromosome!='Y')
+
+in_file_processed2 <- in_file_processed2 %>% 
+  filter(replace_na(TRUE) & dgv == '') %>% 
+  filter(event_size>50|ins_size>50) %>% 
+  filter(break1_chromosome!='X'|break2_chromosome!='X') %>%
+  filter(break1_chromosome!='Y'|break2_chromosome!='Y')
+
 in_file_processed_tumour_comparison$ins_size2 <- as.integer(as.character(in_file_processed_tumour_comparison$ins_size))
+
 in_file_processed_tumour_comparison$Illumina_High_Quality[in_file_processed_tumour_comparison$Illumina_High_Quality == "True_and_False"] <- 'True' 
-in_file_processed_tumour_comparison <- in_file_processed_tumour_comparison %>% filter(replace_na(TRUE) & dgv == '')  %>% filter(event_size>50|ins_size2>50) %>% filter(break1_chromosome!='X'|break2_chromosome!='X') %>% filter(break1_chromosome!='Y'|break2_chromosome!='Y')
+
+in_file_processed_tumour_comparison <- 
+  in_file_processed_tumour_comparison %>% 
+  filter(replace_na(TRUE) & dgv == '')  %>%
+  filter(event_size>50|ins_size2>50) %>% 
+  filter(break1_chromosome!='X'|break2_chromosome!='X') %>%
+  filter(break1_chromosome!='Y'|break2_chromosome!='Y')
 
 
 sample_sheet <- sample_sheet %>%
-                rename("POG_ID" = "library") %>%
-                filter(Has_normal == 'Y') %>%
-                select(library,Anonymous_sample_ID_normal)
+                rename("library"="POG_ID") %>%
+                filter(has_normal == 'Y') %>%
+                select(library,anonymous_sample_ID_normal)
 
 in_file_processed2 <- merge(in_file_processed2, sample_sheet, by = "library")
 
@@ -207,18 +220,33 @@ in_file_processed2 <- merge(in_file_processed2, sample_sheet, by = "library")
 ```{r columns - insertions}
 
 in_file_processed_tumour_comparison_insertion$Illumina_High_Quality[in_file_processed_tumour_comparison_insertion$Illumina_High_Quality == "True_and_False"] <- 'True' 
-in_file_processed_tumour_comparison_insertion <- in_file_processed_tumour_comparison_insertion %>% filter(replace_na(TRUE) & dgv == '')  %>% filter(event_size>50) %>% filter(break1_chromosome!='X'|break2_chromosome!='X') %>% filter(break1_chromosome!='Y'|break2_chromosome!='Y') 
+
+in_file_processed_tumour_comparison_insertion <- 
+  in_file_processed_tumour_comparison_insertion %>% 
+  filter(replace_na(TRUE) & dgv == '')  %>% 
+  filter(event_size>50) %>% 
+  filter(break1_chromosome!='X'|break2_chromosome!='X') %>% 
+  filter(break1_chromosome!='Y'|break2_chromosome!='Y') 
+
 ```
 
 ```{r dataset combination}
-in_file_processed_tumour_comparison_no_ins <- in_file_processed_tumour_comparison %>% filter(event_type != 'insertion') %>% filter(break1_chromosome!='X'|break2_chromosome!='X') %>% filter(break1_chromosome!='Y'|break2_chromosome!='Y')
-in_file_processed_tumour_comparison_no_ins$break1_chromosome <- as.integer(in_file_processed_tumour_comparison_no_ins$break1_chromosome) 
+in_file_processed_tumour_comparison_no_ins <- 
+  in_file_processed_tumour_comparison %>% 
+  filter(event_type != 'insertion') %>% 
+  filter(break1_chromosome!='X'|break2_chromosome!='X') %>%
+  filter(break1_chromosome!='Y'|break2_chromosome!='Y')
+
+in_file_processed_tumour_comparison_no_ins$break1_chromosome <- as.integer(in_file_processed_tumour_comparison_no_ins$break1_chromosome)
+
 in_file_processed_tumour_comparison_no_ins$break2_chromosome <- as.integer(in_file_processed_tumour_comparison_no_ins$break2_chromosome) 
+
 in_file_processed_tumour_comparison <- bind_rows(in_file_processed_tumour_comparison_no_ins,in_file_processed_tumour_comparison_insertion)
 
 in_file_processed_tumour_comparison <- merge(in_file_processed_tumour_comparison, sample_sheet, by = "library")
 in_file_processed_tumour_comparison$library <- in_file_processed_tumour_comparison$Anonymous_sample_ID_normal
-in_file_processed_tumour_comparison <- in_file_processed_tumour_comparison[, !(names(in_file_processed_tumour_comparison) %in% c("Anonymous_sample_ID_normal"))]
+
+in_file_processed_tumour_comparison <- as.data.frame(in_file_processed_tumour_comparison)[, !(names(in_file_processed_tumour_comparison) %in% c("Anonymous_sample_ID_normal"))]
 ```
 ## Global SV Measures 
 
