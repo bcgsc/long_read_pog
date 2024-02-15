@@ -172,12 +172,12 @@ pre_process_mavis_by_library_insertion <- function(x, collapse_svs=TRUE) {
 
 ```{r load files}
 
-mavis_data <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2.tab.gz',encoding="UTF-8")
+mavis_data <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/SV_nanopore_illumina_combined.tsv.gz',encoding="UTF-8")
 
 in_file_processed2 <- pre_process_mavis_by_library(mavis_data)
 in_file_processed_tumour_comparison_copy <- in_file_processed2
 in_file_processed_tumour_comparison <- in_file_processed2
-in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/combined2_ins.tab.gz', encoding="UTF-8") %>% filter(event_type == 'insertion'), FALSE)
+in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/SV_nanopore_illumina_combined_ins.tsv.gz', encoding="UTF-8") %>% filter(event_type == 'insertion'), FALSE)
 sample_sheet <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv', encoding="UTF-8")
 ```
 
