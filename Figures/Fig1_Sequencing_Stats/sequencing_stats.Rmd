@@ -29,6 +29,7 @@ opts_chunk$set(fig.path=paste0('figures/mohccn-', format(Sys.time(), "%Y-%m-%d")
 
 
 ```{r library_imports, include=FALSE, results="hide", warning=FALSE}
+library(conflicted)
 library(tidyverse)
 theme_set(theme_bw(base_size=7))
 theme_update(text=element_text(size=7))
@@ -36,6 +37,8 @@ library(data.table)
 library(egg)
 library(MetBrewer)
 library(ggbeeswarm)
+conflicts_prefer(ggplot2::geom_bar)
+conflicts_prefer(egg::ggarrange)
 ```
 
 ## Basic stats
