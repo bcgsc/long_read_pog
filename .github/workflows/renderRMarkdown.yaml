@@ -38,7 +38,10 @@ jobs:
             RMD_FILES=$( find /workspace -name "*Rmd"  -o -name "*rmd" )
             if [ -n "$RMD_FILES" ]; then
                 echo $RMD_FILES
-                Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' $RMD_FILES
+                for RMD in $RMD_FILES
+                do
+                  Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' $RMD
+                done
             else
                 echo "No R markdown found. Skipping execution."
             fi
