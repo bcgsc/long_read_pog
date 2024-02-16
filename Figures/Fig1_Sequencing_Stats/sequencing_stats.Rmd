@@ -38,6 +38,7 @@ library(egg)
 library(MetBrewer)
 library(ggbeeswarm)
 conflicts_prefer(ggplot2::geom_bar)
+conflicts_prefer(egg::ggarrange)
 ```
 
 ## Basic stats
