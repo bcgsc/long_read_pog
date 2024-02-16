@@ -17,6 +17,7 @@ RUN R -e 'remotes::install_version("ggsurvfit", "1.0.0")'
 RUN R -e 'remotes::install_version("alluvial", "0.1-2")'
 RUN R -e 'remotes::install_version("R.utils", "2.12.3")'
 RUN R -e 'remotes::install_version("ggrepel", "0.9.5")'
+RUN R -e 'remotes::install_version("patchwork","1.2.0")'
 
 # R Bioconductor packages:
 #RUN R -e 'BiocManager::install("BSgenome")'
@@ -24,3 +25,5 @@ RUN R -e 'BiocManager::install("GenomicRanges")'
 RUN R -e 'BiocManager::install("GenomicRanges")'
 RUN R -e 'BiocManager::install("ggbio")'
 RUN R -e 'BiocManager::install("EnsDb.Hsapiens.v86")'
+RUN R -e 'BiocManager::install("M3C")' # M3C version 1.20.0
+
