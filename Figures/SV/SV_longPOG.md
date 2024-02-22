@@ -1,0 +1,401 @@
+SV_longPOG
+================
+
+``` r
+pre_process_mavis_by_library <- function(x, collapse_svs=TRUE) {
+    if(missing(collapse_svs)) {
+        collapse_svs = TRUE
+    }
+  
+  x$Illumina <- grepl("Illumina", x$tools)
+  x$Nanopore <- grepl("Nanopore", x$tools)
+  x$nanomonSV <- grepl("nanomonSV", x$tracking_id)
+  x$SAVANA <- grepl("savana", x$tracking_id)
+  
+  x$Illumina_High_Quality <- ifelse(grepl("False", x$tracking_id) & grepl("True", x$tracking_id), "True_and_False",
+                      ifelse(grepl("False", x$tracking_id), "False",
+                              ifelse(grepl("True", x$tracking_id), "True", 'Nanopore_only')))
+  
+  x$Illumina_High_Quality_Yes <- x$Illumina_High_Quality == 'True'
+  x$Illumina_High_Quality_No <- x$Illumina_High_Quality == 'False'
+  x$Illumina_High_Quality_Yes_and_No <- x$Illumina_High_Quality == 'True_and_False'
+  x$Nanopore_Only <- x$Illumina_High_Quality == 'Nanopore_only'
+  x$Illumina_High_Quality[x$Illumina_High_Quality == "True_and_False"] <- 'True'
+  x$Illumina_High_Quality_Yes[x$Illumina_High_Quality == "True" | x$Illumina_High_Quality == "True_and_False"] <- TRUE 
+  x$event_type[x$event_type == "inverted translocation"] <- "translocation"
+  
+  if (collapse_svs == TRUE){
+    x$event_type[x$event_type == "insertion"] <- "duplication"
+    x$event_size[x$event_type == "translocation"] <- NA
+    x$event_size <- x$break2_position_end -  x$break1_position_start
+  } else {
+    x$event_size <- x$break2_position_end -  x$break1_position_start
+  }
+
+  x <- x %>%
+    mutate(
+      ins_size = str_extract_all(tools, "[0-9]+") %>%
+        purrr::map( 
+          ~ifelse(
+             length(.x) == 1, 
+             as.numeric(.x), 
+             mean(unlist(as.numeric(.x)))
+          )
+        )
+    )
+
+
+  x$Platform <- ifelse(grepl(TRUE, x$Nanopore) & grepl(TRUE, x$Illumina), "Nanopore_and_Illumina",
+                       ifelse(grepl(TRUE, x$Nanopore) & grepl(FALSE, x$Illumina), "Nanopore_only",
+                       ifelse(grepl(FALSE, x$Nanopore), "Illumina_only", 'N/A')
+                       )
+                       )
+  
+  x$Platform2 <- ifelse(grepl(TRUE, x$Nanopore) & grepl(TRUE, x$Illumina), "Nanopore_and_Illumina",
+                     ifelse(grepl(TRUE, x$Nanopore) & grepl(FALSE, x$Illumina), "Nanopore_only",
+                      ifelse(grepl(FALSE, x$Nanopore) & grepl('True_and_False', x$Illumina_High_Quality), "Illumina_only_LQ_HQ",
+                     ifelse(grepl(FALSE, x$Nanopore) & grepl('True', x$Illumina_High_Quality), "Illumina_only_HQ",
+                     ifelse(grepl(FALSE, x$Nanopore) & grepl('False', x$Illumina_High_Quality), "Illumina_only_LQ",
+                     'N/A')
+                     )
+                     )))
+  x <- distinct(x, tracking_id, .keep_all = TRUE )
+  return(x)
+}
+```
+
+``` r
+generate_density <- function(x, input_event_type) {
+  a <- x %>% filter(event_type==input_event_type) %>%
+  ggplot(aes(x=event_size,colour=Platform)) +
+    geom_density() +
+    xlab("Structural Variant Length") +
+    scale_color_discrete(labels=c(paste0('Illumina only', ' (n = ', nrow(x %>% filter(event_type==input_event_type) %>% filter(Platform=='Illumina_only')) ,')'), 
+                                  paste0('Nanopore and Illumina', ' (n = ', nrow(x %>% filter(event_type==input_event_type) %>%filter(Platform=='Nanopore_and_Illumina')) ,')'), 
+                                  paste0('Nanopore only', ' (n = ', nrow(x %>% filter(event_type==input_event_type) %>% filter(Platform=='Nanopore_only')) ,')'))) +
+    labs(colour="Evidence type") +
+scale_x_continuous(trans = scales::log_trans(),
+                  breaks = scales::log_breaks()) + 
+  coord_trans(x="log2")
+  return(a)
+}
+```
+
+``` r
+pre_process_mavis_by_library_insertion <- function(x, collapse_svs=TRUE) {
+    if(missing(collapse_svs)) {
+        collapse_svs = TRUE
+    }
+  
+  x$Delly <- grepl("delly", x$tracking_id)
+  x$Manta <- grepl("manta", x$tracking_id)
+  x$nanomonSV <- grepl("nanomonSV", x$tracking_id)
+  x$SAVANA <- grepl("savana", x$tracking_id)
+  
+  x$Illumina <- ifelse(grepl(TRUE, x$Delly) | grepl(TRUE, x$Manta), TRUE, FALSE)
+  x$Nanopore <- ifelse(grepl(TRUE, x$nanomonSV) | grepl(TRUE, x$SAVANA), TRUE, FALSE)               
+
+  x$Illumina_High_Quality <- ifelse(grepl("False", x$tracking_id) & grepl("True", x$tracking_id), "True_and_False",
+                      ifelse(grepl("False", x$tracking_id), "False",
+                              ifelse(grepl("True", x$tracking_id), "True", 'Nanopore_only')))
+  
+  x$Illumina_High_Quality_Yes <- x$Illumina_High_Quality == 'True'
+  x$Illumina_High_Quality_No <- x$Illumina_High_Quality == 'False'
+  x$Illumina_High_Quality_Yes_and_No <- x$Illumina_High_Quality == 'True_and_False'
+  x$Nanopore_Only <- x$Illumina_High_Quality == 'Nanopore_only'
+  x$Illumina_High_Quality[x$Illumina_High_Quality == "True_and_False"] <- 'True' ## see below explanation
+  x$Illumina_High_Quality_Yes[x$Illumina_High_Quality == "True" | x$Illumina_High_Quality == "True_and_False"] <- TRUE ## see below explanation
+  x$event_type[x$event_type == "inverted translocation"] <- "translocation"
+  
+  if (collapse_svs == TRUE){
+    x$event_type[x$event_type == "insertion"] <- "duplication"
+    x$event_size[x$event_type == "translocation"] <- NA
+    x$event_size <- x$break2_position_end -  x$break1_position_start
+  } else {
+    x$event_size <- x$break2_position_end -  x$break1_position_start
+  }
+
+  x <- x %>%
+    mutate(
+      ins_size = str_extract_all(tools, "[0-9]+") %>%
+        purrr::map( 
+          ~ifelse(
+             length(.x) == 1, 
+             as.numeric(.x), 
+             mean(unlist(as.numeric(.x)))
+          )
+        )
+    )
+
+
+  x$Platform <- ifelse(grepl(TRUE, x$Nanopore) & grepl(TRUE, x$Illumina), "Nanopore_and_Illumina",
+                       ifelse(grepl(TRUE, x$Nanopore) & grepl(FALSE, x$Illumina), "Nanopore_only",
+                       ifelse(grepl(FALSE, x$Nanopore), "Illumina_only", 'N/A')
+                       )
+                       )
+  
+  x$Platform2 <- ifelse(grepl(TRUE, x$Nanopore) & grepl(TRUE, x$Illumina), "Nanopore_and_Illumina",
+                     ifelse(grepl(TRUE, x$Nanopore) & grepl(FALSE, x$Illumina), "Nanopore_only",
+                      ifelse(grepl(FALSE, x$Nanopore) & grepl('True_and_False', x$Illumina_High_Quality), "Illumina_only_LQ_HQ",
+                     ifelse(grepl(FALSE, x$Nanopore) & grepl('True', x$Illumina_High_Quality), "Illumina_only_HQ",
+                     ifelse(grepl(FALSE, x$Nanopore) & grepl('False', x$Illumina_High_Quality), "Illumina_only_LQ",
+                     'N/A')
+                     )
+                     )))
+  x <- distinct(x, tracking_id, .keep_all = TRUE )
+  return(x)
+}
+```
+
+``` r
+mavis_data <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/SV_nanopore_illumina_combined.tsv.gz',encoding="UTF-8")
+
+in_file_processed2 <- pre_process_mavis_by_library(mavis_data)
+in_file_processed_tumour_comparison_copy <- in_file_processed2
+in_file_processed_tumour_comparison <- in_file_processed2
+in_file_processed_tumour_comparison_insertion <- pre_process_mavis_by_library_insertion(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/SV_nanopore_illumina_combined_ins.tsv.gz', encoding="UTF-8") %>% filter(event_type == 'insertion'), FALSE)
+sample_sheet <- fread('https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv', encoding="UTF-8")
+```
+
+### Preprocessing and Initial Statistics
+
+For the global analyses we exclude events \<50 bp.
+
+``` r
+in_file_processed2$Illumina_High_Quality[in_file_processed2$Illumina_High_Quality == "True_and_False"] <- 'True' 
+
+in_file_processed2 <- in_file_processed2 %>% 
+  filter(replace_na(TRUE) & dgv == '') %>% 
+  filter(event_size>50|ins_size>50) %>% 
+  filter(break1_chromosome!='X'|break2_chromosome!='X') %>%
+  filter(break1_chromosome!='Y'|break2_chromosome!='Y')
+
+in_file_processed_tumour_comparison$ins_size2 <- as.integer(as.character(in_file_processed_tumour_comparison$ins_size))
+
+in_file_processed_tumour_comparison$Illumina_High_Quality[in_file_processed_tumour_comparison$Illumina_High_Quality == "True_and_False"] <- 'True' 
+
+in_file_processed_tumour_comparison <- 
+  in_file_processed_tumour_comparison %>% 
+  filter(replace_na(TRUE) & dgv == '')  %>%
+  filter(event_size>50|ins_size2>50) %>% 
+  filter(break1_chromosome!='X'|break2_chromosome!='X') %>%
+  filter(break1_chromosome!='Y'|break2_chromosome!='Y')
+
+
+sample_sheet <- sample_sheet %>%
+                rename("library"="POG_ID") %>%
+                filter(has_normal == 'Y') %>%
+                select(library,anonymous_sample_ID_normal)
+
+in_file_processed2 <- merge(in_file_processed2, sample_sheet, by = "library")
+```
+
+``` r
+in_file_processed_tumour_comparison_insertion$Illumina_High_Quality[in_file_processed_tumour_comparison_insertion$Illumina_High_Quality == "True_and_False"] <- 'True' 
+
+in_file_processed_tumour_comparison_insertion <- 
+  in_file_processed_tumour_comparison_insertion %>% 
+  filter(replace_na(TRUE) & dgv == '')  %>% 
+  filter(event_size>50) %>% 
+  filter(break1_chromosome!='X'|break2_chromosome!='X') %>% 
+  filter(break1_chromosome!='Y'|break2_chromosome!='Y') 
+```
+
+``` r
+in_file_processed_tumour_comparison_no_ins <- 
+  in_file_processed_tumour_comparison %>% 
+  filter(event_type != 'insertion') %>% 
+  filter(break1_chromosome!='X'|break2_chromosome!='X') %>%
+  filter(break1_chromosome!='Y'|break2_chromosome!='Y')
+
+in_file_processed_tumour_comparison_no_ins$break1_chromosome <- as.integer(in_file_processed_tumour_comparison_no_ins$break1_chromosome)
+```
+
+    ## Warning: NAs introduced by coercion
+
+``` r
+in_file_processed_tumour_comparison_no_ins$break2_chromosome <- as.integer(in_file_processed_tumour_comparison_no_ins$break2_chromosome) 
+```
+
+    ## Warning: NAs introduced by coercion
+
+``` r
+in_file_processed_tumour_comparison <- bind_rows(in_file_processed_tumour_comparison_no_ins,in_file_processed_tumour_comparison_insertion)
+
+in_file_processed_tumour_comparison <- merge(in_file_processed_tumour_comparison, sample_sheet, by = "library")
+in_file_processed_tumour_comparison$library <- in_file_processed_tumour_comparison$anonymous_sample_ID_normal
+
+in_file_processed_tumour_comparison <- as.data.frame(in_file_processed_tumour_comparison)[, !(names(in_file_processed_tumour_comparison) %in% c("anonymous_sample_ID_normal"))]
+```
+
+## Global SV Measures
+
+### Main Figure a.
+
+``` r
+all_tumour_count <- as.data.frame(fread('https://www.bcgsc.ca/downloads/nanopore_pog/SVs/ready_for_graph1.tsv'))
+
+all_tumour_count <- mutate(all_tumour_count, SVTYPE = fct_recode(SVTYPE, !!!c('Del'='deletion',
+                                                  'Ins'='insertion',
+                                                  'Dup'='duplication',
+                                                  'Inv'='inversion',
+                                                  'Tra'='translocation')))
+
+result1 <- all_tumour_count %>% filter(SVTYPE == 'Del' | SVTYPE == 'Ins') %>%
+ggplot(aes(x = SVTYPE, y=Count)) +
+  geom_quasirandom(alpha=0.4, stroke=NA) +
+  geom_boxplot(outlier.shape=NA, fill=NA)+ylim(0,41000)+
+  labs(x = "", y = "Count")  + theme_classic(base_size=14) 
+
+result1_2 <- all_tumour_count %>% filter(SVTYPE != 'Del' & SVTYPE != 'Ins') %>%
+ggplot(aes(x = SVTYPE, y=Count)) +
+  geom_quasirandom(alpha=0.4, stroke=NA) +
+  geom_boxplot(outlier.shape=NA, fill=NA)+
+  labs(x = "", y = "Count")  + theme_classic(base_size=14) 
+
+
+prow2 <- plot_grid(
+  result1,
+  result1_2 + ylab(''),
+  nrow = 1,
+  rel_widths = c(4, 5)
+)
+
+
+somatic_counts <- in_file_processed_tumour_comparison %>%
+  filter(Nanopore == TRUE) %>%
+  group_by(library,event_type) %>%
+  summarize(count = n())%>%
+  mutate(event_type = fct_recode(event_type, !!!c('Del'='deletion',
+                                                  'Ins'='insertion',
+                                                  'Dup'='duplication',
+                                                  'Inv'='inversion',
+                                                  'Tra'='translocation')))
+```
+
+    ## `summarise()` has grouped output by 'library'. You can override using the
+    ## `.groups` argument.
+
+``` r
+result2 <-  
+  ggplot(somatic_counts, aes(x = event_type, y=count)) +
+    geom_quasirandom(alpha=0.4, stroke=NA) +
+    geom_boxplot(outlier.shape=NA, fill=NA)+
+    labs(x = "Event Type", y = "Count") + theme_classic(base_size=14) 
+
+plot_grid(prow2, result2, labels = NULL, nrow =2)
+```
+
+![](SV_longPOG_files/figure-gfm/main%20figure%20a-1.png)<!-- -->
+
+``` r
+## Summary measure
+do.call("rbind",
+        tapply(all_tumour_count$Count,       
+               all_tumour_count$SVTYPE,     
+               quantile))
+```
+
+    ##        0%      25%     50%      75%  100%
+    ## Del 10154 16230.25 17340.0 18375.75 23093
+    ## Dup   331   608.00   722.0   870.50  1332
+    ## Ins 10958 18256.50 19130.5 20542.75 40493
+    ## Inv   202   326.50   408.0   466.50   930
+    ## Tra   213   444.75   604.5   783.25  1372
+
+### Concordance analysis and global SVTYPE overview
+
+This is an overview of the types of calls we have.
+
+``` r
+list_of_cols = c('SAVANA', 'nanomonSV', 'Illumina_High_Quality_Yes', 'Illumina_High_Quality_No')
+
+options(scipen=4) 
+ComplexUpset::upset(
+  in_file_processed_tumour_comparison,
+  list_of_cols,
+  labeller=ggplot2::as_labeller(c(
+    'Illumina_High_Quality_No' = 'Illumina Low Quality',
+    'Illumina_High_Quality_Yes'= 'Illumina High Quality',
+    'nanomonSV' = 'nanomonSV',
+    'SAVANA' = 'SAVANA'
+  )),
+  width_ratio=0.1,
+      set_sizes=(
+        upset_set_size()
+        + theme(axis.text.x=element_text(angle=90))
+    )
+  )
+```
+
+![](SV_longPOG_files/figure-gfm/concordance%20analyses-1.png)<!-- -->
+
+``` r
+in_file_processed_tumour_comparison_dup3 <- in_file_processed_tumour_comparison %>% filter(Illumina_High_Quality == 'True' | Illumina_High_Quality == 'Nanopore_only') %>% filter(break1_chromosome != 'X') %>% filter(break1_chromosome != 'Y') 
+
+ggplot(in_file_processed_tumour_comparison_dup3, aes(x =library, fill=event_type)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+![](SV_longPOG_files/figure-gfm/concordance%20analyses-2.png)<!-- -->
+
+### Main Figure c. 
+
+``` r
+generate_density_main <- function(x, input_event_type, xlab_sv_type) {
+  a <- x %>% filter(event_type==input_event_type) %>%
+  ggplot(aes(x=event_size,y = after_stat(count), colour=Platform)) +
+    geom_density() +
+   # xlab(paste(xlab_sv_type,'Length (basepair)',sep=' ')) +
+    xlab('') + 
+    scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                  labels = trans_format("log10", math_format(10^.x)),
+                  limits=c(50,10^9)
+                  ) + 
+    scale_y_continuous(n.breaks = 3) +
+  coord_trans(x="log10") + 
+  theme_classic(base_size=14) + 
+  theme(legend.position="none") +
+  theme(
+        plot.margin = margin(10, 15, 10, 10))
+
+  my.labels <- c('I','I+N','N')
+
+  
+  b <- x %>% filter(event_type==input_event_type) %>% ggplot(aes(x=Platform, fill=Platform)) + geom_bar() + theme_classic(base_size=14) + theme(legend.position="none") +
+  scale_x_discrete(labels= my.labels) +
+  xlab('') + 
+  scale_y_continuous(n.breaks = 3) +
+#  ylab(paste(xlab_sv_type,'s',sep='')) 
+  ylab(substr(xlab_sv_type,1,3)) 
+  c <- plot_grid(b,a)
+  return(c)
+}
+
+a3_test <- generate_density_main(in_file_processed_tumour_comparison %>% filter(Illumina_High_Quality == 'True' | Illumina_High_Quality == 'Nanopore_only'), 'insertion', 'Insertion')
+a3 <- generate_density_main(in_file_processed_tumour_comparison %>% filter(Illumina_High_Quality == 'True' | Illumina_High_Quality == 'Nanopore_only'), 'duplication', 'Duplication')
+```
+
+    ## Warning: Removed 4125 rows containing non-finite values (`stat_density()`).
+
+``` r
+b3 <- generate_density_main(in_file_processed_tumour_comparison %>% filter(Illumina_High_Quality == 'True' | Illumina_High_Quality == 'Nanopore_only'), 'deletion', 'Deletion')
+```
+
+    ## Warning: Removed 13 rows containing non-finite values (`stat_density()`).
+
+``` r
+c3 <- generate_density_main(in_file_processed_tumour_comparison %>% filter(Illumina_High_Quality == 'True' | Illumina_High_Quality == 'Nanopore_only'), 'inversion', 'Inversion')
+
+prow4 <- plot_grid(
+  a3_test + xlab(''),
+  a3 + xlab(''),
+  b3 + xlab(''),
+  c3,
+  nrow = 4
+)
+plot_grid(prow4, rel_widths = c(3, .4))
+```
+
+![](SV_longPOG_files/figure-gfm/main%20figure%20b.%20graph%20v2-1.png)<!-- -->

@@ -9,6 +9,7 @@ on:
       - opened
       - reopened
       - edited
+  push:
 
 jobs:
   run_notebooks:

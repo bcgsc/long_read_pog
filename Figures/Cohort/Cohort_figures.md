@@ -1,7 +1,7 @@
 Cohort figure generation (Figure 1a,b and Extended Data Figure 1a)
 ================
 Erin Pleasance
-2024-02-15
+2024-02-16
 
 This is an R markdown used to generate figures describing the overall
 cohort.
@@ -61,7 +61,12 @@ biopsy_data <- biopsy_data %>%
 
 # Group data into counts for each cohort (tumour type) and biopsy pair
 freqs <- biopsy_data %>% group_by(tumour_type_group, biopsy_group) %>% summarise(n())
+```
 
+    ## `summarise()` has grouped output by 'tumour_type_group'. You can override using
+    ## the `.groups` argument.
+
+``` r
 # Add colours
 freqs <- freqs %>% 
   mutate(
