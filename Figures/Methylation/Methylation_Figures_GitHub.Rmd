@@ -1,0 +1,419 @@
+---
+title: "Codes to generate methylation plots"
+author: "Vahid Akbari"
+output: github_document
+---
+
+This R markdown includes codes to generate methylation related figures, inlcuding allelic and non-allelic methylation.
+
+# Import required libraries
+```{r message=F, warning=F}
+suppressMessages(library(tidyverse))
+suppressMessages(library(ggpubr))
+suppressMessages(library(M3C))
+suppressMessages(library(reshape2))
+suppressMessages(library(data.table))
+suppressMessages(library(patchwork))
+```
+
+# Import data and plot overal methylation
+This will generate overall methylation in tumour samples and normal WGBS cases.
+
+```{r Overall_Methylation, message=F, warning=F, fig.width=12, fig.height=5,echo=F}
+meth_data <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/Overall_Methylation_POGs_WGBS.tsv.gz")
+meth_data$Type<- gsub("Tumour","T",gsub("WGBS","NT",meth_data$Type))
+meth_data$Type<- factor(meth_data$Type, levels = c("T","NT"))
+meth_data_grouped<- meth_data %>% group_by(ID,Type,Region) %>% summarize(value=mean(Methylation))%>%as.data.frame()
+ggplot(meth_data_grouped, 
+                  aes(x=Type, y=value,fill=Type,color=Type)) +
+  scale_fill_manual(values = c("T"="#8A7EC7","NT"="#69BDC3"))+
+  scale_color_manual(values = c("T"="#8A7EC7","NT"="#69BDC3"))+
+  geom_violin()+geom_boxplot(width=0.2, outlier.shape = NA,color="black",lwd=0.4)+
+  stat_compare_means(method = "wilcox.test",size = 4.5,label = "p.format")+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5, color="red",alpha=0.6)+
+  ylab("Methylation")+
+  theme(
+    axis.text.y = element_text(colour = "black", size = 12),
+    axis.text.x = element_text(colour = "black", size = 12),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(colour = "black", size = 14),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    legend.position = "none",
+    strip.text.x = element_text(size = 14),
+    strip.background= element_rect(fill="white",colour = NA))+
+  facet_wrap(~gsub("AllGenome", "All Genome", Region),nrow = 1)
+```
+
+Overall methylation with respect to mutation status in TET and IDH at CGIs.
+
+```{r TET_IDH_Mutation_Methylation_CGIs, message=F, warning=F, fig.width=3, fig.height=5,echo=F}
+pheno<- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/pheno.tsv.gz")
+meth_data_mutation<- merge(meth_data, pheno[,c(2,7)], by.x=c("Name"), by.y=c("tumour_original_source"))
+just_wgbs<- meth_data%>%filter(Type=="NT")
+just_wgbs$GainIDH_Or_LOFTET<- "NT"
+meth_data_mutation<- rbind(meth_data_mutation, just_wgbs)
+head(meth_data_mutation)
+meth_data_mutation<- meth_data_mutation %>% group_by(ID,Type,Region,GainIDH_Or_LOFTET) %>% summarize(value=mean(Methylation))%>%as.data.frame()
+meth_data_mutation$GainIDH_Or_LOFTET<- factor(meth_data_mutation$GainIDH_Or_LOFTET,
+                                              levels = c("No","Yes","NT"))
+comp<- list(c("No","Yes"),c("Yes","NT"),c("No","NT"))
+ggplot(meth_data_mutation%>%filter(Region=="CGIs"), 
+                  aes(x=GainIDH_Or_LOFTET, y=value,fill=Type,color=Type)) +
+  scale_fill_manual(values = c("T"="#8A7EC7","NT"="#69BDC3"))+
+  scale_color_manual(values = c("T"="#8A7EC7","NT"="#69BDC3"))+
+  geom_violin()+geom_boxplot(width=0.2, outlier.shape = NA,color="black",lwd=0.4)+
+  stat_compare_means(method = "wilcox.test",size = 4.5,comparisons = comp)+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5, color="red",alpha=0.6)+
+  ylab("Methylation")+
+  theme(
+    axis.text.y = element_text(colour = "black", size = 12),
+    axis.text.x = element_text(colour = "black", size = 12),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(colour = "black", size = 14),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "black"),
+    legend.position = "none")
+```
+
+# t-SNE based on tumour type
+
+```{r tSNE_Tumour_Types, warning=F, message=F, fig.width=7, fig.height=5,echo=F}
+readymat_merge<- data.frame()
+anno_Tumour_type = c("#D3C3E0","#B2509E","#00A99D","#ED2891","#104A7F",
+                     "#6E7BA2","#D97D25","#00AEEF","#9EDDF9","#009444","#BBD642")
+types<- c("LUNG","CNS-PNS","SARC","BRCA","CHOL","PANC","OV","HNSC","COLO","LYMP","SKCM")
+names(anno_Tumour_type)<- types
+pheno<- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/pheno.tsv.gz")%>%filter(tumour_type_cohort%in%types)
+input_files<- c("AveragedMethylation_CGIs.tsv.gz","AveragedMethylation_CTCF.tsv.gz",
+                "AveragedMethylation_Enhancers.tsv.gz","AveragedMethylation_Promoters.tsv.gz")
+for (i in input_files){
+  mat <- read_delim(paste("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/",i,sep=""))
+  readymat<- mat%>%select(as.character(pheno$tumour_original_source))%>%na.omit()
+  for (t_type in types){
+    filtered_pheno<- pheno%>%filter(tumour_type_cohort==t_type)
+    filtered_readymat<- readymat%>%select(as.character(filtered_pheno$tumour_original_source))
+    readymat$mean <- apply(filtered_readymat, 1, mean, na.rm=FALSE)
+    names(readymat)[length(names(readymat))]<- t_type
+  }
+  readymat$row_stdev <- apply(readymat[,158:168], 1, sd, na.rm=FALSE)
+  readymat<- readymat%>%filter(row_stdev>=0.2)
+  readymat<- readymat[,1:157]
+  readymat_merge<- rbind(readymat_merge,readymat)
+}
+plot_tsne<- tsne(readymat_merge %>% mutate_at(1:157, as.numeric)
+                ,labels=as.factor(pheno$tumour_type_cohort),
+                colvec = anno_Tumour_type,
+                perplex = 15,seed=56,
+                controlscale=TRUE,scale=3,dotsize = 3)
+print(plot_tsne)
+```
+
+# t-SNE based on biopsy site
+```{r tSNE_Biopsy_Sites, warning=F, message=F, fig.width=8, fig.height=5,echo=F}
+readymat_merge<- data.frame()
+anno_bipsy_type = c("#E9E1F0","#66BF8F","#D9A8CF","#EFB0A8","#ECBE92","#7092B2",
+                    "#F694C8","#80BFDA","#CFEEFC","#B9A5D0","#DDEBA1","#80D4CE")
+types<- c("Respiratory_System","Lymphatic_System","Brain","Abdomen","Reproductive_System",
+          "Liver","Breast","Chest_Wall","Head_&_Neck","Spine","Skin","Soft_Tissue")
+names(anno_bipsy_type)<- types
+pheno<- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/pheno.tsv.gz")%>%filter(biopsy_site_cohort%in%types)
+input_files<- c("AveragedMethylation_CGIs.tsv.gz","AveragedMethylation_CTCF.tsv.gz",
+                "AveragedMethylation_Enhancers.tsv.gz","AveragedMethylation_Promoters.tsv.gz")
+for (i in input_files){
+  mat <- read_delim(paste("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/",i,sep=""))
+  readymat<- mat%>%select(as.character(pheno$tumour_original_source))%>%na.omit()
+  for (t_type in types){
+    filtered_pheno<- pheno%>%filter(biopsy_site_cohort==t_type)
+    filtered_readymat<- readymat%>%select(as.character(filtered_pheno$tumour_original_source))
+    readymat$mean <- apply(filtered_readymat, 1, mean, na.rm=FALSE)
+    names(readymat)[length(names(readymat))]<- t_type
+  }
+  readymat$row_stdev <- apply(readymat[,183:194], 1, sd, na.rm=FALSE)
+  readymat<- readymat%>%filter(row_stdev>=0.2)
+  readymat<- readymat[,1:182]
+  readymat_merge<- rbind(readymat_merge,readymat)
+}
+plot_tsne<- tsne(readymat_merge %>% mutate_at(1:182, as.numeric),
+                labels=as.factor(pheno$biopsy_site_cohort),
+                colvec = anno_bipsy_type,perplex = 15,
+                seed=56,controlscale=TRUE,scale=3,dotsize = 3)
+print(plot_tsne)
+```
+
+# Fraction of allelic DMRs based on copy number status
+```{r aDMRs_Count_Genomic_Regions, warning=F, message=F, fig.width=6, fig.height=5,echo=F}
+mat<- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/AllelicDMRCount_FractionGenomeCNV.tsv.gz")
+mat$Frac_HetDip<- mat$NumDMRs_HetDip/(mat$NumDMRs_HetDip+
+                                        mat$NumDMRs_HetCNV+
+                                        mat$NumDMRs_Hom)
+mat$Frac_HetCNV<- mat$NumDMRs_HetCNV/(mat$NumDMRs_HetDip+
+                                        mat$NumDMRs_HetCNV+
+                                        mat$NumDMRs_Hom)
+mat$Frac_Hom<- mat$NumDMRs_Hom/(mat$NumDMRs_HetDip+
+                                  mat$NumDMRs_HetCNV+
+                                  mat$NumDMRs_Hom)
+mat$Normalized_HetDip<- mat$Frac_HetDip/mat$FractionGenome_HetDip
+mat$Normalized_HetCNV<- mat$Frac_HetCNV/mat$FractionGenome_HetCNV
+mat$Normalized_Hom<- mat$Frac_Hom/mat$FractionGenome_Hom
+readymat<- melt(mat[,c(1,3,4,11,12,13,14,15,16)],id.vars = c("ID","Type","Class"))
+readymat<- readymat %>% group_by(ID,Type,Class,variable)%>% summarize(value=mean(value))%>%as.data.frame()
+my_comparisons <- list( c("HetDip", "HetCNV"), c("HetDip", "Hom"), 
+                        c("HetCNV", "Hom"))
+p1<- ggplot(filter(readymat,variable %like% "^Frac"), 
+            aes(x=gsub("Frac_","",variable), 
+                y=value))+
+  geom_boxplot(notch=FALSE,outlier.shape = NA, position = position_dodge(0.8),linewidth=1,fatten = 1)+
+  stat_compare_means(method = "wilcox.test",comparisons = my_comparisons,size = 4.5,label = "p.format")+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5,color="red",alpha=0.6)+
+  ylab("Fraction of Allelic DMRs")+ #ylim(y_lim[1],y_lim[2]+0.5)+
+  theme(axis.text.y = element_text(colour = "black", size = 12),
+        axis.text.x = element_text(colour = "black", size = 12,angle = 90, vjust = 0.5, hjust=1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(colour = "black", angle=90, size = 14),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        legend.text = element_text(size = 12),
+        legend.title = element_blank(), legend.position = "bottom")
+
+
+p2<- ggplot(filter(readymat,variable %like% "^Normalized"), 
+            aes(x=gsub("Normalized_","",variable), 
+                y=log10(value+1)))+
+  geom_boxplot(notch=FALSE,outlier.shape = NA, position = position_dodge(0.8),linewidth=1,fatten = 1)+
+  stat_compare_means(method = "wilcox.test",comparisons = my_comparisons,size = 4.5,label = "p.format")+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5,color="red",alpha=0.6)+
+  xlab("")+
+  ylab("Log10(Normalized Fraction+1)")+#ylim(y_lim[1],y_lim[2]+0.5)+
+  theme(axis.text.x = element_text(colour = "black", size = 12, angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_text(colour = "black", size = 12),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(colour = "black", angle=90, size = 14),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line= element_line(colour = "black"),
+        legend.title = element_blank(), legend.position = "none")
+p1+p2+plot_layout(nrow = 1)
+```
+
+# RET methylation plot
+
+```{r RET_Methylation, warning=FALSE, fig.width=10, fig.height=5,echo=F}
+mat<- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/RET_CDKN2A_Methylation.tsv.gz")
+mat<- mat %>% group_by(ID,Type,Class,Allele,Position,Gene)%>% summarize(value=mean(Methylation))%>%as.data.frame()
+mat$Type<- gsub("WGBS","NT",mat$Type)
+mat$Type<- factor(mat$Type, levels = c("Tumour","Blood","NT"))
+anno_Tumour_type = c("#7C3A88","#8A7EC7","#69BDC3","#0B8892","#406070")
+names(anno_Tumour_type)<- c("HP1_Tumour","HP2_Tumour",
+                            "HP1_Blood","HP2_Blood")
+ggplot(filter(mat, Position>= 43101000 & Position<=43108500 & Gene=="RET"),  
+                  aes(x=Position, 
+                      y=value,color=gsub("Allele","HP",paste(Allele,Type,sep="_"))))+
+  scale_color_manual(values = anno_Tumour_type)+
+  geom_smooth(method = "loess",se=F,linewidth=1, span=0.3)+
+  ylab("Methylation")+
+  ylim(-0.01,1.01)+
+  theme(axis.text.x = element_text(colour = "black", size = 12),
+        axis.text.y = element_text(colour = "black", size = 12),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(colour = "black", angle=90, size = 18),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        legend.text = element_text(size = 16),
+        legend.position = "top", legend.title=element_blank(), 
+        strip.text = element_text(size = 16),
+        strip.background= element_rect(fill="white",colour = NA))+
+  facet_wrap(~Type, ncol = 1,strip.position = "left")
+```
+
+# CDKN2A methylation plot
+
+```{r CDKN2A_Methylation, warning=FALSE, fig.width=10, fig.height=5,echo=F}
+ggplot(filter(mat, Position>= 21963000 & Position<=21997000 & Gene=="CDKN2A"),  
+                  aes(x=Position, 
+                      y=value,color=gsub("Allele","HP",paste(Allele,Type,sep="_"))))+
+  scale_color_manual(values = anno_Tumour_type)+
+  geom_smooth(method = "loess",se=F,linewidth=1, span=0.3)+
+  ylab("Methylation")+
+  ylim(-0.01,1.01)+
+  theme(axis.text.x = element_text(colour = "black", size = 12),
+        axis.text.y = element_text(colour = "black", size = 12),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(colour = "black", angle=90, size = 18),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        legend.text = element_text(size = 16),
+        legend.position = "top", legend.title=element_blank(),
+        strip.text = element_text(size = 16),
+        strip.background= element_rect(fill="white",colour = NA))+
+  facet_wrap(~Type, ncol = 1,strip.position = "left")
+```
+
+# RET Expression box plots
+
+```{r RET_Expression, warning=FALSE, fig.width=6, fig.height=7,echo=F}
+mat <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/RET_CDKN2A_ExpressionMethylation.tsv.gz")
+mat<- mat %>% group_by(ID,Gene,Type,Category)%>% summarize(value=mean(TPM))%>%as.data.frame()
+mat$Category<- gsub("IntraAllelicMethylated","IPASM",
+                    gsub("IntraUnmethylated","IPU",
+                    gsub("IntraMethylated","IPM",mat$Category)))
+mat$Type<- factor(mat$Type, levels = c("Tumour","GTEx"))
+mat$Category<- factor(mat$Category, levels = c("IPM","IPU",
+                                               "IPASM","GTEx"))
+mat_ret<-filter(mat,value>1 & Gene=="RET")
+p1<- ggplot(mat_ret, aes(x=Type,y=log2(value), fill=Type))+
+  scale_fill_manual(values = c("Tumour"="#8A7EC7","GTEx"="#69BDC3"))+
+  stat_boxplot(geom="errorbar",  linewidth=1, width=0.045,color="black") + 
+  geom_boxplot(notch=FALSE,outlier.shape = NA, position = position_dodge(0.8),linewidth=NA)+
+  stat_boxplot(aes(ymin = after_stat(middle), ymax = after_stat(middle)), geom="errorbar", linewidth=1, width=0.75,color="black") +
+  stat_compare_means(method = "wilcox.test" ,size = 3.5,label = "p.format")+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5,color="red",alpha=0.6)+
+  ylab("Log2(TPM)")+ ylim(min(log2(mat_ret$value)),max(log2(mat_ret$value))+3)+
+  theme(axis.text.x = element_text(colour = "black", size = 12,angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_text(colour = "black", size = 12),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(colour = "black", angle=90, size = 14),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        legend.title = element_blank(),
+        legend.position = "none")
+
+my_comparisons <- list( c("IPM", "GTEx"), c("IPU", "GTEx"), 
+                        c("IPM","IPU") )
+p2<- ggplot(filter(mat_ret, Category%in%c("IPM","IPU","GTEx")), 
+            aes(x=Category,y=log2(value), fill=Type))+
+  scale_fill_manual(values = c("Tumour"="#8A7EC7","GTEx"="#69BDC3"))+
+  stat_boxplot(geom="errorbar",  linewidth=1, width=0.055,color="black") + 
+  geom_boxplot(notch=FALSE,outlier.shape = NA, position = position_dodge(0.8),linewidth=NA)+
+  stat_boxplot(aes(ymin = after_stat(middle), ymax = after_stat(middle)), geom="errorbar", linewidth=1, width=0.75,color="black") +
+  stat_compare_means(method = "wilcox.test" ,size = 3.5,label = "p.format",comparisons = my_comparisons)+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5,color="red",alpha=0.6)+
+  ylab("Log2(TPM)")+ylim(min(log2(mat_ret$value)),max(log2(mat_ret$value))+3)+
+  theme(axis.text.x = element_text(colour = "black", size = 12,angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line.x = element_line(colour = "black"),
+        axis.ticks.y=element_blank(),
+        legend.title = element_blank(),
+        legend.position = "none")
+
+p3<- ggplot(filter(mat_ret, Category%in%c("IPASM","GTEx")), 
+            aes(x=Category,y=log2(value), fill=Type))+
+  scale_fill_manual(values = c("Tumour"="#8A7EC7","GTEx"="#69BDC3"))+
+  stat_boxplot(geom="errorbar",  linewidth=1, width=0.045,color="black") + 
+  geom_boxplot(notch=FALSE,outlier.shape = NA, position = position_dodge(0.8),linewidth=NA)+
+  stat_boxplot(aes(ymin = after_stat(middle), ymax = after_stat(middle)), geom="errorbar", linewidth=1, width=0.75,color="black") +
+  stat_compare_means(method = "wilcox.test" ,size = 3.5,label = "p.format")+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5,color="red",alpha=0.6)+
+  ylab("Log2(TPM)")+ylim(min(log2(mat_ret$value)),max(log2(mat_ret$value))+3)+
+  theme(axis.text.x = element_text(colour = "black", size = 12,angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line.x = element_line(colour = "black"),
+        axis.ticks.y=element_blank(),
+        legend.title = element_blank(),
+        legend.position = "none")
+p1+p2+p3+plot_layout(nrow = 1)
+```
+
+# CDKN2A Expression box plots
+
+```{r CDKN2A_Expression, warning=FALSE, fig.width=6, fig.height=5,echo=F}
+mat_cdk<-filter(mat,value>1 & Gene=="CDKN2A")
+p1<- ggplot(mat_cdk, aes(x=Type,y=log2(value), fill=Type))+
+  scale_fill_manual(values = c("Tumour"="#8A7EC7","GTEx"="#69BDC3"))+
+  stat_boxplot(geom="errorbar",  linewidth=1, width=0.045,color="black") + 
+  geom_boxplot(notch=FALSE,outlier.shape = NA, position = position_dodge(0.8),linewidth=NA)+
+  stat_boxplot(aes(ymin = after_stat(middle), ymax = after_stat(middle)), geom="errorbar", linewidth=1, width=0.75,color="black") +
+  stat_compare_means(method = "wilcox.test" ,size = 3.5,label = "p.format")+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5,color="red",alpha=0.6)+
+  ylab("Log2(TPM)")+ ylim(min(log2(mat_cdk$value)),max(log2(mat_cdk$value))+3)+
+  theme(axis.text.x = element_text(colour = "black", size = 12,angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_text(colour = "black", size = 12),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(colour = "black", angle=90, size = 14),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        legend.title = element_blank(),
+        legend.position = "none")
+
+my_comparisons <- list( c("IPM", "GTEx"), c("IPU", "GTEx"), 
+                        c("IPM","IPU") )
+p2<- ggplot(filter(mat_cdk, Category%in%c("IPM","IPU","GTEx")), 
+            aes(x=Category,y=log2(value), fill=Type))+
+  scale_fill_manual(values = c("Tumour"="#8A7EC7","GTEx"="#69BDC3"))+
+  stat_boxplot(geom="errorbar",  linewidth=1, width=0.055,color="black") + 
+  geom_boxplot(notch=FALSE,outlier.shape = NA, position = position_dodge(0.8),linewidth=NA)+
+  stat_boxplot(aes(ymin = after_stat(middle), ymax = after_stat(middle)), geom="errorbar", linewidth=1, width=0.75,color="black") +
+  stat_compare_means(method = "wilcox.test" ,size = 3.5,label = "p.format",comparisons = my_comparisons)+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5,color="red",alpha=0.6)+
+  ylab("Log2(TPM)")+ylim(min(log2(mat_cdk$value)),max(log2(mat_cdk$value))+3)+
+  theme(axis.text.x = element_text(colour = "black", size = 12,angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line.x = element_line(colour = "black"),
+        axis.ticks.y=element_blank(),
+        legend.title = element_blank(),
+        legend.position = "none")
+
+p3<- ggplot(filter(mat_cdk, Category%in%c("IPASM","GTEx")), 
+            aes(x=Category,y=log2(value), fill=Type))+
+  scale_fill_manual(values = c("Tumour"="#8A7EC7","GTEx"="#69BDC3"))+
+  stat_boxplot(geom="errorbar",  linewidth=1, width=0.045,color="black") + 
+  geom_boxplot(notch=FALSE,outlier.shape = NA, position = position_dodge(0.8),linewidth=NA)+
+  stat_boxplot(aes(ymin = after_stat(middle), ymax = after_stat(middle)), geom="errorbar", linewidth=1, width=0.75,color="black") +
+  stat_compare_means(method = "wilcox.test" ,size = 3.5,label = "p.format")+
+  stat_summary(fun=mean, geom="point", shape=15, size=1.5,color="red",alpha=0.6)+
+  ylab("Log2(TPM)")+ylim(min(log2(mat_cdk$value)),max(log2(mat_cdk$value))+3)+
+  theme(axis.text.x = element_text(colour = "black", size = 12,angle = 90, vjust = 0.5, hjust=1),
+        axis.text.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.line.x = element_line(colour = "black"),
+        axis.ticks.y=element_blank(),
+        legend.title = element_blank(),
+        legend.position = "none")
+p1+p2+p3+plot_layout(nrow = 1)
+```
