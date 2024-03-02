@@ -11,7 +11,7 @@ library(tidyverse)
     ## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
     ## ✔ dplyr     1.1.4     ✔ readr     2.1.5
     ## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-    ## ✔ ggplot2   3.4.4     ✔ tibble    3.2.1
+    ## ✔ ggplot2   3.5.0     ✔ tibble    3.2.1
     ## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
     ## ✔ purrr     1.0.2     
     ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
@@ -42,5 +42,12 @@ survfit2(Surv(time, status) ~ ecDNA, data = Long_POG_df) %>%
   add_legend_title() + 
   add_risktable() 
 ```
+
+    ## Warning in ggplot2::geom_blank(): All aesthetics have length 1, but the data has 152 rows.
+    ## ℹ Did you mean to use `annotate()`?
+    ## All aesthetics have length 1, but the data has 152 rows.
+    ## ℹ Did you mean to use `annotate()`?
+    ## All aesthetics have length 1, but the data has 152 rows.
+    ## ℹ Did you mean to use `annotate()`?
 
 ![](Extended_data_ecDNA_C_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
