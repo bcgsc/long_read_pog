@@ -10,6 +10,10 @@ RUN pip install pandas
 RUN pip install scipy
 RUN pip install datashader
 RUN pip install matplotlib
+RUN pip install seaborn
+RUN pip install numpy
+RUN pip install logging
+RUN pip install statsmodels
 
 # Change permissions to run jupyter notebook
 RUN chmod -R 777 ./
