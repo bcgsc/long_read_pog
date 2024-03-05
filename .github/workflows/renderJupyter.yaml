@@ -36,7 +36,8 @@ jobs:
         run: |
           notebooks=$(find /workspace -name "*.ipynb")
           if [ -n "$notebooks" ]; then
-              find /workspace -name "*.ipynb" -exec jupyter nbconvert --to notebook --execute {} \;
+              find /workspace -name "*.ipynb" -exec jupyter nbconvert --to html --execute {} \;
+              find /workspace -name "*.ipynb" -exec jupyter nbconvert --to markdown --execute {} \;
           else
               echo "No Jupyter notebooks found. Skipping execution."
           fi 

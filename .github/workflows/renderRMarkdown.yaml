@@ -45,4 +45,6 @@ jobs:
             else
                 echo "No R markdown found. Skipping execution."
             fi
+      #Checkout again to avoid race condition with parallel-running Jupyter rendering script.
+      - uses: actions/checkout@v4
       - uses: stefanzweifel/git-auto-commit-action@v5
