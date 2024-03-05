@@ -8,6 +8,7 @@ FROM jupyter/base-notebook
 USER root
 
 # Install Arial font and co:
+RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
 RUN apt-get update && apt-get install -y font-manager \
  msttcorefonts && \
  apt-get autoclean && rm -rf /var/lib/apt/lists/*
