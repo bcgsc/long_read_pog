@@ -2,6 +2,9 @@
 
 FROM jupyter/base-notebook
 
+# Install Arial font and co:
+RUN apt install msttcorefonts
+
 # Install any additional dependencies you need
 # For example, if you use Python notebooks, you might want to install additional packages:
 # e.g RUN pip install -r requirements.txt
