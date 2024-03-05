@@ -2,10 +2,18 @@
 
 FROM jupyter/base-notebook
 
-# Install Arial font and co:
-RUN sudo apt install font-manager
-RUN sudo apt install msttcorefonts -qq
 
+
+# must reset to user root to install packages
+USER root
+
+# Install Arial font and co:
+RUN apt-get update && apt-get install -y font-manager \
+ msttcorefonts && \
+ apt-get autoclean && rm -rf /var/lib/apt/lists/*
+
+# set the user back to original setting
+USER $NB_UID
 
 # Install any additional dependencies you need
 # For example, if you use Python notebooks, you might want to install additional packages:
