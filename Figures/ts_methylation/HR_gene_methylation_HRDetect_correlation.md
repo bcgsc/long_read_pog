@@ -7,6 +7,8 @@ from matplotlib.pylab import plt
 import seaborn as sns
 from matplotlib.lines import Line2D
 import warnings
+import ssl
+from urllib.request import urlopen
 %matplotlib inline
 
 warnings.filterwarnings("ignore")
@@ -282,9 +284,16 @@ def main():
     filename_methyl_fraction_non_BRC_OVA = r"https://www.bcgsc.ca/downloads/nanopore_pog/ts_methylation//BRCA1_RAD51C_fraction_of_methylated_sites_non_BRC_OVA.tsv"
     filename_BRCA1_RAD51C_logTPM = r"https://www.bcgsc.ca/downloads/nanopore_pog/ts_methylation//BRCA1_RAD51C_logTPM.tsv"
     
-    df_methyl_BRC_OVA = pd.read_csv(filename_methyl_fraction_BRC_OVA, sep = "\t", index_col = "tumour_original_source")
-    df_methyl_non_BRC_OVA = pd.read_csv(filename_methyl_fraction_non_BRC_OVA, sep = "\t", index_col = "tumour_original_source")
-    df_BRCA1_RAD51C_logTPM = pd.read_csv(filename_BRCA1_RAD51C_logTPM, sep = "\t", index_col = "tumour_original_source")
+    context=ssl.create_default_context()
+    context.set_ciphers("DEFAULT")
+    
+    result_BRC_OVA = urlopen(filename_methyl_fraction_BRC_OVA, context=context)
+    result_non_BRC_OVA = urlopen(filename_methyl_fraction_non_BRC_OVA, context=context)
+    result_BRCA1_RAD51C_logTPM = urlopen(filename_BRCA1_RAD51C_logTPM, context=context)
+    
+    df_methyl_BRC_OVA = pd.read_csv(result_BRC_OVA, sep = "\t", index_col = "tumour_original_source")
+    df_methyl_non_BRC_OVA = pd.read_csv(result_non_BRC_OVA, sep = "\t", index_col = "tumour_original_source")
+    df_BRCA1_RAD51C_logTPM = pd.read_csv(result_BRCA1_RAD51C_logTPM, sep = "\t", index_col = "tumour_original_source")
 
 
     generate_HRDetect_plot_BRC_OVA(df_methyl_BRC_OVA, df_methyl_non_BRC_OVA, PALETTE, OFFSET_METHYLATED)
@@ -298,79 +307,659 @@ if __name__ == "__main__":
         logger.critical("Failure: %s", err, exc_info=True)
 ```
 
-    CRITICAL:__main__:Failure: <urlopen error [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1006)>
-    Traceback (most recent call last):
-      File "/opt/conda/lib/python3.11/urllib/request.py", line 1348, in do_open
-        h.request(req.get_method(), req.selector, req.data, headers,
-      File "/opt/conda/lib/python3.11/http/client.py", line 1286, in request
-        self._send_request(method, url, body, headers, encode_chunked)
-      File "/opt/conda/lib/python3.11/http/client.py", line 1332, in _send_request
-        self.endheaders(body, encode_chunked=encode_chunked)
-      File "/opt/conda/lib/python3.11/http/client.py", line 1281, in endheaders
-        self._send_output(message_body, encode_chunked=encode_chunked)
-      File "/opt/conda/lib/python3.11/http/client.py", line 1041, in _send_output
-        self.send(msg)
-      File "/opt/conda/lib/python3.11/http/client.py", line 979, in send
-        self.connect()
-      File "/opt/conda/lib/python3.11/http/client.py", line 1458, in connect
-        self.sock = self._context.wrap_socket(self.sock,
-                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/ssl.py", line 517, in wrap_socket
-        return self.sslsocket_class._create(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/ssl.py", line 1108, in _create
-        self.do_handshake()
-      File "/opt/conda/lib/python3.11/ssl.py", line 1379, in do_handshake
-        self._sslobj.do_handshake()
-    ssl.SSLError: [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1006)
+    INFO:__main__:generating HRDetect plots for BRC and OVA samples
+    INFO:__main__:BRCA1
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    INFO:__main__:RAD51C
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    INFO:__main__:generating HRDetect plots for non BRC and OVA samples
+    INFO:__main__:BRCA1
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    INFO:__main__:RAD51C
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    INFO:__main__:generating TPM plots for BRC and OVA samples
+    INFO:__main__:BRCA1
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    INFO:__main__:RAD51C
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+
+
+
     
-    During handling of the above exception, another exception occurred:
+![png](HR_gene_methylation_HRDetect_correlation_files/HR_gene_methylation_HRDetect_correlation_2_1.png)
     
-    Traceback (most recent call last):
-      File "/tmp/ipykernel_147/4130098315.py", line 17, in <module>
-        main()
-      File "/tmp/ipykernel_147/4130098315.py", line 6, in main
-        df_methyl_BRC_OVA = pd.read_csv(filename_methyl_fraction_BRC_OVA, sep = "\t", index_col = "tumour_original_source")
-                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
-        return _read(filepath_or_buffer, kwds)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 620, in _read
-        parser = TextFileReader(filepath_or_buffer, **kwds)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
-        self._engine = self._make_engine(f, self.engine)
-                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 1880, in _make_engine
-        self.handles = get_handle(
-                       ^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/site-packages/pandas/io/common.py", line 728, in get_handle
-        ioargs = _get_filepath_or_buffer(
-                 ^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/site-packages/pandas/io/common.py", line 384, in _get_filepath_or_buffer
-        with urlopen(req_info) as req:
-             ^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/site-packages/pandas/io/common.py", line 289, in urlopen
-        return urllib.request.urlopen(*args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/urllib/request.py", line 216, in urlopen
-        return opener.open(url, data, timeout)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/urllib/request.py", line 519, in open
-        response = self._open(req, data)
-                   ^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/urllib/request.py", line 536, in _open
-        result = self._call_chain(self.handle_open, protocol, protocol +
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/urllib/request.py", line 496, in _call_chain
-        result = func(*args)
-                 ^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/urllib/request.py", line 1391, in https_open
-        return self.do_open(http.client.HTTPSConnection, req,
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      File "/opt/conda/lib/python3.11/urllib/request.py", line 1351, in do_open
-        raise URLError(err)
-    urllib.error.URLError: <urlopen error [SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1006)>
+
+
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+
+
+
+    
+![png](HR_gene_methylation_HRDetect_correlation_files/HR_gene_methylation_HRDetect_correlation_2_3.png)
+    
+
+
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+    WARNING:matplotlib.font_manager:findfont: Font family 'Arial' not found.
+
+
+
+    
+![png](HR_gene_methylation_HRDetect_correlation_files/HR_gene_methylation_HRDetect_correlation_2_5.png)
+    
 
 
 
