@@ -307,33 +307,58 @@ if __name__ == "__main__":
         logger.critical("Failure: %s", err, exc_info=True)
 ```
 
-    INFO:__main__:generating HRDetect plots for BRC and OVA samples
-    INFO:__main__:BRCA1
-    INFO:__main__:RAD51C
-    INFO:__main__:generating HRDetect plots for non BRC and OVA samples
-    INFO:__main__:BRCA1
-    INFO:__main__:RAD51C
-    INFO:__main__:generating TPM plots for BRC and OVA samples
-    INFO:__main__:BRCA1
-    INFO:__main__:RAD51C
-
-
-
+    CRITICAL:__main__:Failure: <urlopen error [Errno 110] Connection timed out>
+    Traceback (most recent call last):
+      File "/opt/conda/lib/python3.11/urllib/request.py", line 1348, in do_open
+        h.request(req.get_method(), req.selector, req.data, headers,
+      File "/opt/conda/lib/python3.11/http/client.py", line 1286, in request
+        self._send_request(method, url, body, headers, encode_chunked)
+      File "/opt/conda/lib/python3.11/http/client.py", line 1332, in _send_request
+        self.endheaders(body, encode_chunked=encode_chunked)
+      File "/opt/conda/lib/python3.11/http/client.py", line 1281, in endheaders
+        self._send_output(message_body, encode_chunked=encode_chunked)
+      File "/opt/conda/lib/python3.11/http/client.py", line 1041, in _send_output
+        self.send(msg)
+      File "/opt/conda/lib/python3.11/http/client.py", line 979, in send
+        self.connect()
+      File "/opt/conda/lib/python3.11/http/client.py", line 1458, in connect
+        self.sock = self._context.wrap_socket(self.sock,
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/opt/conda/lib/python3.11/ssl.py", line 517, in wrap_socket
+        return self.sslsocket_class._create(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/opt/conda/lib/python3.11/ssl.py", line 1108, in _create
+        self.do_handshake()
+      File "/opt/conda/lib/python3.11/ssl.py", line 1379, in do_handshake
+        self._sslobj.do_handshake()
+    TimeoutError: [Errno 110] Connection timed out
     
-![png](HR_gene_methylation_HRDetect_correlation_files/HR_gene_methylation_HRDetect_correlation_2_1.png)
+    During handling of the above exception, another exception occurred:
     
-
-
-
-    
-![png](HR_gene_methylation_HRDetect_correlation_files/HR_gene_methylation_HRDetect_correlation_2_2.png)
-    
-
-
-
-    
-![png](HR_gene_methylation_HRDetect_correlation_files/HR_gene_methylation_HRDetect_correlation_2_3.png)
-    
+    Traceback (most recent call last):
+      File "/tmp/ipykernel_1826/2334529884.py", line 24, in <module>
+        main()
+      File "/tmp/ipykernel_1826/2334529884.py", line 11, in main
+        result_BRCA1_RAD51C_logTPM = urlopen(filename_BRCA1_RAD51C_logTPM, context=context)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/opt/conda/lib/python3.11/urllib/request.py", line 216, in urlopen
+        return opener.open(url, data, timeout)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/opt/conda/lib/python3.11/urllib/request.py", line 519, in open
+        response = self._open(req, data)
+                   ^^^^^^^^^^^^^^^^^^^^^
+      File "/opt/conda/lib/python3.11/urllib/request.py", line 536, in _open
+        result = self._call_chain(self.handle_open, protocol, protocol +
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/opt/conda/lib/python3.11/urllib/request.py", line 496, in _call_chain
+        result = func(*args)
+                 ^^^^^^^^^^^
+      File "/opt/conda/lib/python3.11/urllib/request.py", line 1391, in https_open
+        return self.do_open(http.client.HTTPSConnection, req,
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/opt/conda/lib/python3.11/urllib/request.py", line 1351, in do_open
+        raise URLError(err)
+    urllib.error.URLError: <urlopen error [Errno 110] Connection timed out>
 
 
 
