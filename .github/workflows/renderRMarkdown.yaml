@@ -18,8 +18,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -28,6 +26,8 @@ jobs:
           context: .
           push: false  # Set to true if you want to push the image to a registry
           tags: notebook-runner
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Run Docker container to compile assets
         uses: addnab/docker-run-action@v3
