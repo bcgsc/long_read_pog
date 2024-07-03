@@ -12,6 +12,15 @@ from urllib.request import urlopen
 
 ```
 
+    /opt/conda/lib/python3.11/site-packages/dask/dataframe/__init__.py:49: FutureWarning: 
+    Dask dataframe query planning is disabled because dask-expr is not installed.
+    
+    You can install it with `pip install dask[dataframe]` or `conda install dask`.
+    This will raise in a future version.
+    
+      warnings.warn(msg, FutureWarning)
+
+
 
 ```python
 # import data - make sure to change to data from GSC website
