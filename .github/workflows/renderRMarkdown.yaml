@@ -28,14 +28,15 @@ jobs:
           file: container/rmd.Dockerfile
           context: .
           push: false  # Set to true if you want to push the image to a registry
-          tags: notebook-runner
+          load: true
+          tags: notebook-runner:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Run Docker container to compile assets
         uses: addnab/docker-run-action@v3
         with:
-          image: notebook-runner
+          image: notebook-runner:latest
           options: -v ${{ github.workspace }}:/workspace --rm -u root
           run: |
             RMD_FILES=$( find /workspace -name "*Rmd"  -o -name "*rmd" )
