@@ -80,6 +80,8 @@ jobs:
                 done
             else
                 echo "No R markdown found. Skipping execution."
+            fi
+
       - uses: stefanzweifel/git-auto-commit-action@v5
 
 
