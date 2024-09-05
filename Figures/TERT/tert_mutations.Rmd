@@ -1,0 +1,243 @@
+---
+title: "TERT promoter mutations: Allele-specific expression and differential methylation"
+author: "Erin Pleasance"
+date: "2024-05-29"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+suppressMessages(library(tidyverse))
+suppressMessages(library(ggpubr))
+suppressMessages(library(scales))
+```
+
+### Read in data on TERT mutations, ASE, aDMRs and raw methylation frequencies. 
+
+```{r import-data}
+
+# Import ASE/DMR/mutation data for TERT
+ase <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/TERT/TERT_all_ASE.txt", show_col_types = FALSE)
+
+dmr <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/TERT/TERT_all_DMR.txt", show_col_types = FALSE)
+
+muts <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/TERT/TERT_all_mutations.txt", show_col_types = FALSE)
+  
+# Import normal and tumour methylation data for TERT promoter
+tumour_meth <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/TERT/TERT_tumour_haplotype_methyl.tsv", show_col_types = FALSE)
+
+normal_meth <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/Methylation/TERT/TERT_normal_haplotype_methyl.tsv", show_col_types = FALSE)
+
+# Import expression matrix data and ID conversion samples table
+expressionMatrix <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/ASE/expressionMatrix.tsv.gz", show_col_types = FALSE)
+
+samples <- read_delim("https://www.bcgsc.ca/downloads/nanopore_pog/supplementary_tables/Supplementary_Table_1_samples.tsv", show_col_types = FALSE)
+
+
+```
+
+### Process to combine data for each sample.
+
+```{r combine-data}
+
+#Get TERT data with POG ID from expression matrix
+#Add 0.01 to expression TPM values so can log transform later
+expr <- expressionMatrix %>% filter(gene == "TERT") %>% pivot_longer(!gene, names_to = "sample", values_to = "TPM")
+expr <- left_join(expr, select(samples, c(POG_ID, tumour_original_source, anonymous_sample_ID_tumour, is_additional_biopsy)), by=c("sample" = "anonymous_sample_ID_tumour"))
+expr <- expr %>% mutate(TPM = TPM+0.01)
+
+#Add ASE data
+#Make a column with only significant (p<=0.05) ASE states
+tert_data <- left_join(expr, select(ase, c(-pogid, -gene, -expression)), by=c("tumour_original_source" = "sample"))
+tert_data <- tert_data %>% mutate(ASE = case_when(
+  padj <= 0.05 ~ aseResults,
+  TRUE ~ "No ASE"
+))
+#Make a column with significant ASE states, flagged by TPM
+tert_data <- tert_data %>% mutate(ASE_TPM = case_when(
+  TPM < 1 ~ "Low TPM",
+  TRUE ~ ASE
+))
+tert_data$ASE_TPM <- factor(tert_data$ASE_TPM, levels = c("ASE", "No ASE", "Low TPM"))
+
+
+#Make a column with significant ASE states AND allele direction
+tert_data <- tert_data %>% mutate(ASE_allele = case_when(
+  ASE == "ASE" & allele1IsMajor == TRUE ~ "ASE allele 1",
+  ASE == "ASE" & allele1IsMajor == FALSE ~ "ASE allele 2",
+  TRUE ~ "No ASE"
+))
+
+#Add DMR data
+dmr <- dmr %>% group_by(POG_ID) %>% top_n(1, abs_diff)
+tert_data <- left_join(tert_data, select(dmr, c(-gene)), by=c("POG_ID" = "POG_ID"))
+
+#Add mutation data
+muts <- muts %>% mutate(mutation = "Mutation") %>% rename(mutated_allele = Final_allele)
+tert_data <- left_join(tert_data, select(muts, c(-gene)), by=c("POG_ID" = "POG_ID"))
+tert_data <- tert_data %>% mutate(mutation = replace_na(mutation, "No mutation"))
+tert_data$mutation <- factor(tert_data$mutation, levels = c("No mutation", "Mutation"))
+
+
+```
+
+### Plot TERT expression and ASE status by presence of promoter mutation.
+
+```{r plot-ase-expression}
+
+ggplot(tert_data %>% group_by(mutation), aes(x = mutation, y = TPM)) +
+  geom_boxplot(outlier.shape = NA) + geom_jitter(height=0, width=0.2, aes(color=ASE_TPM)) +
+  stat_compare_means(comparisons = list( c("No mutation", "Mutation")), method = "wilcox.test") +
+  scale_colour_manual(values=c("#F8847C", "#323232", "#7D7D7D")) +
+  scale_y_continuous(trans='log10', labels = label_comma()) +
+  ylab("TERT expression (TPM)") +
+  theme_classic() +
+  theme(axis.text.y=element_text(size=12, colour="black"),
+        axis.title.x=element_blank(), axis.text.x=element_text(size=12, colour="black"), legend.title=element_blank()
+  )
+
+```
+
+### Statistics comparing mutated and non-mutated samples.
+
+```{r stats-ase-expression}
+# Do events with promoter mutation have higher expression?
+
+wilcox.test(TPM ~ mutation, data=tert_data) 
+
+# Are events with promoter mutation more likely to have ASE?
+cont_table <- tert_data %>%
+  select(tumour_original_source, ASE, mutation) %>%
+  group_by(ASE, mutation) %>%
+  summarise(count = n()) %>%
+  pivot_wider(names_from=c("ASE"), values_from=count) %>%
+  mutate_all(~replace(., is.na(.), 0))
+cont_rownames <- cont_table$mutation
+cont_matrix <- data.matrix(cont_table %>% select(-mutation))
+rownames(cont_matrix) <- cont_rownames
+
+# Fisher exact test on 2x2 contingency table
+fisher.test(cont_matrix)
+
+
+```
+
+### Examine overall methylation data in TERT promoter, in all cases (regardless of detected aDMR). Use methylation in normal blood samples to identify typically unmethylated region as core promoter.
+
+
+```{r meth}
+#Use blood methylation data to define the typically unmethylated promoter region, based on average methylation at each CpG
+
+normal_means <- normal_meth %>% mutate(mean_methyl = rowMeans(select(normal_meth, starts_with("POG")), na.rm = TRUE))
+
+ggplot(normal_means, aes(x = Start, y = mean_methyl)) + 
+  geom_point() + geom_line() +
+  ylab("Average methylation fraction") +
+  xlab("Genomic position (bp on chromosome 5)") +
+  theme_classic() +
+  theme(axis.text.y=element_text(size=12, colour="black"),
+        axis.text.x=element_text(size=12, colour="black"),
+        axis.title.y=element_text(size=14, colour="black"),
+        axis.title.x=element_text(size=14, colour="black"),
+        legend.position="none"
+  )
+
+#Limit the tumour methylation data to the core promoter with mean methylation < 0.25: 1294414-1295655 (153 CpGs)
+
+tumour_meth <- tumour_meth %>% filter(Start>=1294414 & Start<=1295655)
+
+#Summarize average methylation on each haplotype
+
+tumour_meth_means <- tumour_meth %>% select(-End, -Start, -gene)  %>%
+  summarize(across(everything(), mean, na.rm = TRUE)) %>%
+  pivot_longer(cols = everything(), names_to = "Sample_haplotype", values_to = "mean_methyl")
+
+tumour_meth_means <- tumour_meth_means %>%
+  separate_wider_delim(Sample_haplotype, "_", names = c("Sample", "Haplotype"))
+
+tumour_meth_means$Sample <- gsub("\\.", "-", tumour_meth_means$Sample)
+
+#Define 'more methylated' and 'less methylated' alleles
+
+tumour_meth_means <- tumour_meth_means %>% 
+  group_by(Sample) %>%
+  mutate(max_methyl = max(mean_methyl, na.rm=TRUE)) %>%
+  mutate(min_methyl = min(mean_methyl, na.rm=TRUE)) %>%
+  mutate(diff_avg_methyl = max_methyl-min_methyl) %>% 
+  mutate(methylation = case_when(
+    max_methyl==mean_methyl ~ "More methylated",
+    TRUE ~ "Less methylated"
+  ))
+tumour_meth_means$methylation <- factor(tumour_meth_means$methylation, levels = c("More methylated", "Less methylated"))
+
+
+#Add mutation and ASE data
+#Format tert data by haplotype (ASE and mutation)
+tert_data_hp <- tert_data %>% select(tumour_original_source, POG_ID, ASE_allele, mutated_allele, diff.Methy, TPM) %>%
+  mutate(ASE_hp = case_when(
+    ASE_allele == "ASE allele 1" ~ "HP1",
+    ASE_allele == "ASE allele 2" ~ "HP2"
+  ))
+
+tumour_meth_means <- left_join(tumour_meth_means, tert_data_hp, by=c("Sample" = "tumour_original_source"))
+
+tumour_meth_means <- tumour_meth_means %>% mutate(mutated = case_when(
+  mutated_allele == Haplotype ~ TRUE,
+  TRUE ~ FALSE
+))
+
+tumour_meth_means <- tumour_meth_means %>% mutate(ASE = case_when(
+  ASE_hp == Haplotype ~ TRUE,
+  TRUE ~ FALSE
+))
+
+
+```
+
+
+### Plot distribution of allele-specific TERT promoter methylation, noting aDMRs and mutation status.
+
+```{r plot-meth-mut}
+
+#Plot for mutated cases only (exclude if do not know which allele is mutated)
+ggplot(tumour_meth_means %>% filter(mutated_allele== "HP1" | mutated_allele== "HP2") %>% mutate(fill_factor = case_when(
+  (is.na(diff.Methy) | diff_avg_methyl<0.1) ~ "empty",
+  methylation == "More methylated" ~ "dark",
+  TRUE ~ "light"
+)), aes(x = reorder(POG_ID, -mean_methyl), y = mean_methyl)) +
+  geom_point(aes(shape=mutated, colour = methylation, fill = fill_factor, size=5, stroke=1)) +
+  scale_shape_manual(values=c(21,25)) +
+  scale_colour_manual(values=c("black", "#606060")) +
+  scale_fill_manual(values=c("black", "white", "#606060"), guide = "none") +
+  scale_size_continuous(guide = "none") +
+  ylab("TERT promoter methylation fraction") +
+  ylim(0,1) +
+  xlab("Sample") +
+  
+  theme_classic() +
+  theme(axis.text.y=element_text(size=12, colour="black"),
+        axis.title.y=element_text(size=12, colour="black"),
+        axis.text.x=element_text(size=10, colour="black", angle=90),
+        axis.title.x=element_text(size=12, colour="black")
+        )
+```
+
+### Compare methylation of alleles with mutation (consider only those with an aDMR and where the mutation allele is known).
+
+```{r plot-meth-mut-dmr}
+
+#Plot for mutated cases only 
+ggplot(tumour_meth_means %>% filter(startsWith(mutated_allele, "HP"), !is.na(diff.Methy)), aes(x = mutated, y = mean_methyl)) +
+  geom_boxplot(outlier.shape = NA) + geom_jitter(height=0, width=0.2) +
+  stat_compare_means(comparisons = list( c(TRUE, FALSE)), method = "wilcox.test") +
+  ylab("Allele-specific methylation") +
+  xlab("Allele with mutation") +
+  theme_classic() +
+  theme(axis.text.y=element_text(size=12, colour="black"),
+        axis.title.y=element_text(size=10, colour="black"),
+        axis.text.x=element_blank(),
+        axis.title.x=element_text(size=12, colour="black"),
+        axis.ticks.x=element_blank(),
+  )
+```
+

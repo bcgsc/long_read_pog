@@ -50,23 +50,21 @@ jobs:
 
       - name: Check for changed R Markdown files
         id: check_rmd_files
-        run: |
-          CHANGED_RMD_FILES=$(git diff --name-only HEAD^ HEAD -- '*.Rmd' '*.rmd')
-          if [ -n "$CHANGED_RMD_FILES" ]; then
-            echo "Changed R Markdown files:"
-            echo "$CHANGED_RMD_FILES"
-            echo "::set-output name=has_changed::true"
-            echo "$CHANGED_RMD_FILES" > changed_rmd_files.txt
-          else
-            echo "No changed R Markdown files found."
-            echo "::set-output name=has_changed::false"
-          fi
-        
-      - name: Run Docker container to compile changed R Markdown files
-        if: steps.check_rmd_files.outputs.has_changed == 'true'
-        uses: addnab/docker-run-action@v3
+        uses: tj-actions/changed-files@v45
         with:
-          image: ${{ steps.meta_rmd.outputs.tags }}
+          files_yaml: |
+            Rmd:
+              - '**.Rmd'
+              - '**.rmd'
+
+         
+      - name: Run Docker container to compile changed R Markdown files
+        if: steps.check_rmd_files.outputs.test_any_changed == 'true'
+        uses: addnab/docker-run-action@v3
+        env:
+          CHANGED_RMD_FILES: ${{ steps.check_rmd_files.outputs.test_all_changed_files }}
+        with:
+          image: bcgsc/long-pog-rmd:${{ steps.meta_rmd.outputs.tags }}
           options: |
             -v ${{ github.workspace }}:/workspace \
             -v /tmp/cache:/root/.cache \
@@ -138,7 +136,7 @@ jobs:
       if: steps.check_ipynb_files.outputs.has_changed == 'true'
       uses: addnab/docker-run-action@v3
       with:
-        image: ${{ steps.meta_jupyter.outputs.tags }}
+        image: bcgsc/long-pog-jupyter:${{ steps.meta_jupyter.outputs.tags }}
         options: |
           -v ${{ github.workspace }}:/workspace \
           -v /tmp/cache:/root/.cache \

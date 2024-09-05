@@ -20,6 +20,7 @@ RUN R -e 'remotes::install_version("ggrepel", "0.9.5")'
 RUN R -e 'remotes::install_version("reshape2", "1.4.4")'
 RUN R -e 'remotes::install_version("conflicted", "1.2.0")'
 RUN R -e 'remotes::install_version("patchwork","1.2.0")'
+RUN R -e 'remotes::install_version("scales", "1.3.0")'
 
 # R Bioconductor packages:
 RUN R -e 'BiocManager::install("GenomicRanges")'
