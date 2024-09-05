@@ -47,23 +47,6 @@ jobs:
           tags: ${{ steps.meta_rmd.outputs.tags }}
           labels: ${{ steps.meta_rmd.outputs.labels }}
 
-      - name: Run Docker container to compile changed R Markdown files
-        uses: addnab/docker-run-action@v3
-        with:
-          image: ${{ steps.meta_rmd.outputs.tags }}
-          options: -v ${{ github.workspace }}:/workspace --rm -u root
-          run: |
-            CHANGED_RMD_FILES=$(git diff --name-only HEAD^ HEAD -- '*.Rmd' '*.rmd')
-            if [ -n "$CHANGED_RMD_FILES" ]; then
-              echo "Changed R Markdown files:"
-              echo "$CHANGED_RMD_FILES"
-              for RMD in $CHANGED_RMD_FILES; do
-                Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' /workspace/$RMD
-              done
-            else
-              echo "No changed R Markdown files found. Skipping execution."
-            fi
-
 
       - name: Check for changed R Markdown files
         id: check_rmd_files
