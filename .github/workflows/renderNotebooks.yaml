@@ -46,7 +46,25 @@ jobs:
           push: true 
           tags: ${{ steps.meta_rmd.outputs.tags }}
           labels: ${{ steps.meta_rmd.outputs.labels }}
-      
+
+      - name: Run Docker container to compile changed R Markdown files
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ${{ steps.meta_rmd.outputs.tags }}
+        options: -v ${{ github.workspace }}:/workspace --rm -u root
+      run: |
+        CHANGED_RMD_FILES=$(git diff --name-only HEAD^ HEAD -- '*.Rmd' '*.rmd')
+        if [ -n "$CHANGED_RMD_FILES" ]; then
+          echo "Changed R Markdown files:"
+          echo "$CHANGED_RMD_FILES"
+          for RMD in $CHANGED_RMD_FILES; do
+            Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' /workspace/$RMD
+          done
+        else
+          echo "No changed R Markdown files found. Skipping execution."
+        fi
+
+
       - name: Run Docker container to compile assets
         uses: addnab/docker-run-action@v3
         with:
@@ -108,13 +126,18 @@ jobs:
       with:
         image: ${{ steps.meta_jupyter.outputs.tags }}
         options: -v ${{ github.workspace }}:/workspace --rm -u root
-        run: |
-          notebooks=$(find /workspace -name "*.ipynb")
-          if [ -n "$notebooks" ]; then
-              find /workspace -name "*.ipynb" -exec jupyter nbconvert --to html --execute {} \;
-              find /workspace -name "*.ipynb" -exec jupyter nbconvert --to markdown --execute {} \;
+
+      run: |
+          changed_notebooks=$(git diff --name-only HEAD^ HEAD -- '*.ipynb')
+          if [ -n "$changed_notebooks" ]; then
+            echo "Changed notebooks:"
+            echo "$changed_notebooks"
+            for notebook in $changed_notebooks; do
+              jupyter nbconvert --to html --execute /workspace/$notebook
+              jupyter nbconvert --to markdown --execute /workspace/$notebook
+            done
           else
-              echo "No Jupyter notebooks found. Skipping execution."
-          fi 
+            echo "No changed Jupyter notebooks found. Skipping execution."
+          fi
 
     - uses: stefanzweifel/git-auto-commit-action@v5 
