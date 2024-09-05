@@ -1,0 +1,154 @@
+# Github action that renders R markdown when PR is opened
+# All R markdown is run in container/rmd.Dockerfile 
+
+on:
+  pull_request:
+    types: [opened, reopened, edited]
+  push:
+  workflow_dispatch:
+
+name: render-notebooks
+
+jobs:
+  render-rmarkdown:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+      - name: Check if Dockerfile changed
+        id: dockerfile-check
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q 'container/rmd.Dockerfile'; then
+            echo "dockerfile_changed=true" >> $GITHUB_ENV
+          else
+            echo "dockerfile_changed=false" >> $GITHUB_ENV
+          fi
+
+      - name: Extract metadata (tags, labels) for Rmd Docker
+        id: meta_rmd
+        uses: docker/metadata-action@v5.3.0
+        with:
+          images: bcgsc/long-pog-rmd
+
+      - name: Build and push Docker image
+        if: env.dockerfile_changed == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          file: container/rmd.Dockerfile
+          context: .
+          push: true 
+          tags: ${{ steps.meta_rmd.outputs.tags }}
+          labels: ${{ steps.meta_rmd.outputs.labels }}
+
+
+      - name: Check for changed R Markdown files
+        id: check_rmd_files
+        run: |
+          CHANGED_RMD_FILES=$(git diff --name-only HEAD^ HEAD -- '*.Rmd' '*.rmd')
+          if [ -n "$CHANGED_RMD_FILES" ]; then
+            echo "Changed R Markdown files:"
+            echo "$CHANGED_RMD_FILES"
+            echo "::set-output name=has_changed::true"
+            echo "$CHANGED_RMD_FILES" > changed_rmd_files.txt
+          else
+            echo "No changed R Markdown files found."
+            echo "::set-output name=has_changed::false"
+          fi
+        
+      - name: Run Docker container to compile changed R Markdown files
+        if: steps.check_rmd_files.outputs.has_changed == 'true'
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ steps.meta_rmd.outputs.tags }}
+          options: |
+            -v ${{ github.workspace }}:/workspace \
+            -v /tmp/cache:/root/.cache \
+            --rm -u root
+          run: |
+            CHANGED_RMD_FILES=$(cat changed_rmd_files.txt)
+            for RMD in $CHANGED_RMD_FILES; do
+              Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' /workspace/$RMD
+            done
+
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+
+
+  render_jupyter:
+    runs-on: ubuntu-latest
+    needs: render-rmarkdown
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
+
+
+    
+    - name: Check if Dockerfile changed
+      id: dockerfile-check
+      run: |
+          if git diff --name-only HEAD^ HEAD | grep -q 'container/jupyter.Dockerfile'; then
+            echo "dockerfile_changed=true" >> $GITHUB_ENV
+          else
+            echo "dockerfile_changed=false" >> $GITHUB_ENV
+          fi
+
+    - name: Extract metadata (tags, labels) for Jupyter Docker
+      id: meta_jupyter
+      uses: docker/metadata-action@v5.3.0
+      with:
+        images: bcgsc/long-pog-jupyter
+
+    - name: Build and push Docker image
+      if: env.dockerfile_changed == 'true'
+      uses: docker/build-push-action@v5
+      with:
+        file: container/jupyter.Dockerfile
+        context: .
+        push: true
+        tags: ${{ steps.meta_jupyter.outputs.tags }}
+        labels: ${{ steps.meta_jupyter.outputs.labels }}
+
+
+
+    - name: Check for changed Jupyter Notebook files
+      id: check_ipynb_files
+      run: |
+        CHANGED_IPYNB_FILES=$(git diff --name-only HEAD^ HEAD -- '*.ipynb')
+        if [ -n "$CHANGED_IPYNB_FILES" ]; then
+          echo "Changed Jupyter Notebook files:"
+          echo "$CHANGED_IPYNB_FILES"
+          echo "::set-output name=has_changed::true"
+          echo "$CHANGED_IPYNB_FILES" > changed_ipynb_files.txt
+        else
+          echo "No changed Jupyter Notebook files found."
+          echo "::set-output name=has_changed::false"
+        fi
+      
+    - name: Run Docker container to compile changed Jupyter Notebooks
+      if: steps.check_ipynb_files.outputs.has_changed == 'true'
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ${{ steps.meta_jupyter.outputs.tags }}
+        options: |
+          -v ${{ github.workspace }}:/workspace \
+          -v /tmp/cache:/root/.cache \
+          --rm -u root
+        run: |
+          CHANGED_IPYNB_FILES=$(cat changed_ipynb_files.txt)
+          for NOTEBOOK in $CHANGED_IPYNB_FILES; do
+            jupyter nbconvert --to html --execute /workspace/$NOTEBOOK
+            jupyter nbconvert --to markdown --execute /workspace/$NOTEBOOK
+          done
+
+
+    - uses: stefanzweifel/git-auto-commit-action@v5 
