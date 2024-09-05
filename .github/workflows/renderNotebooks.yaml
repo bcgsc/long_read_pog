@@ -124,17 +124,17 @@ jobs:
         image: ${{ steps.meta_jupyter.outputs.tags }}
         options: -v ${{ github.workspace }}:/workspace --rm -u root
 
-      run: |
-          changed_notebooks=$(git diff --name-only HEAD^ HEAD -- '*.ipynb')
-          if [ -n "$changed_notebooks" ]; then
-            echo "Changed notebooks:"
-            echo "$changed_notebooks"
-            for notebook in $changed_notebooks; do
-              jupyter nbconvert --to html --execute /workspace/$notebook
-              jupyter nbconvert --to markdown --execute /workspace/$notebook
-            done
-          else
-            echo "No changed Jupyter notebooks found. Skipping execution."
-          fi
+        run: |
+            changed_notebooks=$(git diff --name-only HEAD^ HEAD -- '*.ipynb')
+            if [ -n "$changed_notebooks" ]; then
+              echo "Changed notebooks:"
+              echo "$changed_notebooks"
+              for notebook in $changed_notebooks; do
+                jupyter nbconvert --to html --execute /workspace/$notebook
+                jupyter nbconvert --to markdown --execute /workspace/$notebook
+              done
+            else
+              echo "No changed Jupyter notebooks found. Skipping execution."
+            fi
 
     - uses: stefanzweifel/git-auto-commit-action@v5 
