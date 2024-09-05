@@ -66,7 +66,7 @@ jobs:
         if: steps.check_rmd_files.outputs.has_changed == 'true'
         uses: addnab/docker-run-action@v3
         with:
-          image: ${{ steps.meta_rmd.outputs.tags }}
+          image: bcgsc/long-pog-rmd:${{ steps.meta_rmd.outputs.tags }}
           options: |
             -v ${{ github.workspace }}:/workspace \
             -v /tmp/cache:/root/.cache \
@@ -138,7 +138,7 @@ jobs:
       if: steps.check_ipynb_files.outputs.has_changed == 'true'
       uses: addnab/docker-run-action@v3
       with:
-        image: ${{ steps.meta_jupyter.outputs.tags }}
+        image: bcgsc/long-pog-jupyter:${{ steps.meta_jupyter.outputs.tags }}
         options: |
           -v ${{ github.workspace }}:/workspace \
           -v /tmp/cache:/root/.cache \
