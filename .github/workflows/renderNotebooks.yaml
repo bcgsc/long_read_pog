@@ -1,0 +1,105 @@
+# Github action that renders R markdown when PR is opened
+# All R markdown is run in container/rmd.Dockerfile 
+
+on:
+  pull_request:
+    types: [opened, reopened, edited]
+  push:
+  workflow_dispatch:
+
+name: render-notebooks
+
+jobs:
+  render-rmarkdown:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+      - name: Check if Dockerfile changed
+        id: dockerfile-check
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q 'container/rmd.Dockerfile'; then
+            echo "dockerfile_changed=true" >> $GITHUB_ENV
+          else
+            echo "dockerfile_changed=false" >> $GITHUB_ENV
+          fi
+
+      - name: Build and push Docker image
+        if: env.dockerfile_changed == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          file: container/rmd.Dockerfile
+          context: .
+          push: false  # Set to true if you want to push the image to a registry
+          tags: notebook-runner
+      
+      - name: Run Docker container to compile assets
+        uses: addnab/docker-run-action@v3
+        with:
+          image: notebook-runner
+          options: -v ${{ github.workspace }}:/workspace --rm -u root
+          run: |
+            RMD_FILES=$( find /workspace -name "*Rmd"  -o -name "*rmd" )
+            if [ -n "$RMD_FILES" ]; then
+                echo $RMD_FILES
+                for RMD in $RMD_FILES
+                do
+                  Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' $RMD
+                done
+            else
+                echo "No R markdown found. Skipping execution."
+            fi
+      #Checkout again to avoid race condition with parallel-running Jupyter rendering script.
+      - uses: actions/checkout@v4
+      - uses: stefanzweifel/git-auto-commit-action@v5
+
+
+  render_jupyter:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Check if Dockerfile changed
+        id: dockerfile-check
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q 'container/jupyter.Dockerfile'; then
+            echo "dockerfile_changed=true" >> $GITHUB_ENV
+          else
+            echo "dockerfile_changed=false" >> $GITHUB_ENV
+          fi
+
+    - name: Build and push Docker image
+        if: env.dockerfile_changed == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          file: container/jupyter.Dockerfile
+          context: .
+          push: false  # Set to true if you want to push the image to a registry
+          tags: notebook-runner
+
+
+
+    - name: Run Docker container to compile JupyterNotebook
+      uses: addnab/docker-run-action@v3
+      with:
+        image: notebook-runner
+        options: -v ${{ github.workspace }}:/workspace --rm -u root
+        run: |
+          notebooks=$(find /workspace -name "*.ipynb")
+          if [ -n "$notebooks" ]; then
+              find /workspace -name "*.ipynb" -exec jupyter nbconvert --to html --execute {} \;
+              find /workspace -name "*.ipynb" -exec jupyter nbconvert --to markdown --execute {} \;
+          else
+              echo "No Jupyter notebooks found. Skipping execution."
+          fi 
+
+    - uses: stefanzweifel/git-auto-commit-action@v5 
