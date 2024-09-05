@@ -31,19 +31,26 @@ jobs:
             echo "dockerfile_changed=false" >> $GITHUB_ENV
           fi
 
+      - name: Extract metadata (tags, labels) for Rmd Docker
+        id: meta_rmd
+        uses: docker/metadata-action@v5.3.0
+        with:
+          images: bcgsc/long-pog-rmd
+
       - name: Build and push Docker image
         if: env.dockerfile_changed == 'true'
         uses: docker/build-push-action@v5
         with:
           file: container/rmd.Dockerfile
           context: .
-          push: false  # Set to true if you want to push the image to a registry
-          tags: notebook-runner
+          push: true 
+          tags: ${{ steps.meta_rmd.outputs.tags }}
+          labels: ${{ steps.meta_rmd.outputs.labels }}
       
       - name: Run Docker container to compile assets
         uses: addnab/docker-run-action@v3
         with:
-          image: notebook-runner
+          image: ${{ steps.meta_rmd.outputs.tags }}
           options: -v ${{ github.workspace }}:/workspace --rm -u root
           run: |
             RMD_FILES=$( find /workspace -name "*Rmd"  -o -name "*rmd" )
@@ -77,21 +84,28 @@ jobs:
             echo "dockerfile_changed=false" >> $GITHUB_ENV
           fi
 
+    - name: Extract metadata (tags, labels) for Jupyter Docker
+        id: meta_jupyter
+        uses: docker/metadata-action@v5.3.0
+        with:
+          images: bcgsc/long-pog-jupyter
+
     - name: Build and push Docker image
         if: env.dockerfile_changed == 'true'
         uses: docker/build-push-action@v5
         with:
           file: container/jupyter.Dockerfile
           context: .
-          push: false  # Set to true if you want to push the image to a registry
-          tags: notebook-runner
+          push: true
+          tags: ${{ steps.meta_jupyter.outputs.tags }}
+          labels: ${{ steps.meta_jupyter.outputs.labels }}
 
 
 
     - name: Run Docker container to compile JupyterNotebook
       uses: addnab/docker-run-action@v3
       with:
-        image: notebook-runner
+        image: ${{ steps.meta_jupyter.outputs.tags }}
         options: -v ${{ github.workspace }}:/workspace --rm -u root
         run: |
           notebooks=$(find /workspace -name "*.ipynb")
