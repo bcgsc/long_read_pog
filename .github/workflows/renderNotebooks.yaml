@@ -60,6 +60,7 @@ jobs:
           else
             echo "No changed R Markdown files found."
             echo "::set-output name=has_changed::false"
+          fi
         
       - name: Run Docker container to compile changed R Markdown files
         if: steps.check_rmd_files.outputs.has_changed == 'true'
@@ -127,6 +128,7 @@ jobs:
         else
           echo "No changed Jupyter Notebook files found."
           echo "::set-output name=has_changed::false"
+        fi
       
     - name: Run Docker container to compile changed Jupyter Notebooks
       if: steps.check_ipynb_files.outputs.has_changed == 'true'
