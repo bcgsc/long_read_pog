@@ -52,17 +52,17 @@ jobs:
         with:
           image: ${{ steps.meta_rmd.outputs.tags }}
           options: -v ${{ github.workspace }}:/workspace --rm -u root
-        run: |
-          CHANGED_RMD_FILES=$(git diff --name-only HEAD^ HEAD -- '*.Rmd' '*.rmd')
-          if [ -n "$CHANGED_RMD_FILES" ]; then
-            echo "Changed R Markdown files:"
-            echo "$CHANGED_RMD_FILES"
-            for RMD in $CHANGED_RMD_FILES; do
-              Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' /workspace/$RMD
-            done
-          else
-            echo "No changed R Markdown files found. Skipping execution."
-          fi
+          run: |
+            CHANGED_RMD_FILES=$(git diff --name-only HEAD^ HEAD -- '*.Rmd' '*.rmd')
+            if [ -n "$CHANGED_RMD_FILES" ]; then
+              echo "Changed R Markdown files:"
+              echo "$CHANGED_RMD_FILES"
+              for RMD in $CHANGED_RMD_FILES; do
+                Rscript -e 'for (f in commandArgs(TRUE)) if (file.exists(f)) rmarkdown::render(f, output_format = "all")' /workspace/$RMD
+              done
+            else
+              echo "No changed R Markdown files found. Skipping execution."
+            fi
 
 
       - name: Run Docker container to compile assets
